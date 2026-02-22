@@ -1,25 +1,23 @@
 import { NextResponse } from "next/server";
 
-export async function POST (req: Request) {
-  const base = process.env.API_BASE;
+export async function POST(req: Request) {
+  const base = process.env.NEXT_PUBLIC_API_BASE || process.env.API_BASE;
+
   if (!base) {
-    return NextResponse.json({ error: "API_BASE is not set on the server. Create student-ui/.env.local" }, { status: 500 });
+    return NextResponse.json(
+      { error: "API base URL not configured (set NEXT_PUBLIC_API_BASE on Vercel)" },
+      { status: 500 }
+    );
   }
-  const url = `${base}/uncertainty`;
-  const init: RequestInit = {
+
+  const body = await req.json();
+
+  const upstream = await fetch(`${base}/uncertainty`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-  };
-  if ("POST" !== "GET") {
-    const body = await req.json();
-    init.body = JSON.stringify(body);
-  }
-  const upstream = await fetch(url, init);
-  const text = await upstream.text();
-  return new NextResponse(text, {
-    status: upstream.status,
-    headers: {
-      "Content-Type": upstream.headers.get("content-type") || "application/json"
-    }
+    body: JSON.stringify(body),
   });
+
+  const data = await upstream.json();
+  return NextResponse.json(data, { status: upstream.status });
 }
