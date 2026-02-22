@@ -2,7 +2,18 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 import joblib
 import pandas as pd
+from fastapi.middleware.cors import CORSMiddleware
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        "https://YOUR-VERCEL-APP.vercel.app",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 # ---- Paths (relative to project root) ----
 MODEL_PATH = "artifacts/lgbm_model.joblib"
 FEATURES_PATH = "artifacts/feature_columns.joblib"
@@ -146,3 +157,4 @@ def recommend(student: StudentInput):
 
     recs = sorted(recs, key=lambda x: -x["risk_reduction"])
     return {"baseline_risk": round(base, 4), "recommendations": recs[:5]}
+
