@@ -11,6 +11,7 @@ import csv
 import io
 import json
 import math
+import os
 from datetime import datetime
 from urllib import error, request
 
@@ -28,7 +29,14 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-API_BASE = "http://127.0.0.1:8000"
+def resolve_api_base() -> str:
+    value = os.getenv("API_BASE", "http://127.0.0.1:8000").strip()
+    if not value.startswith(("http://", "https://")):
+        value = f"https://{value}"
+    return value.rstrip("/")
+
+
+API_BASE = resolve_api_base()
 
 # ─── Session state init ───────────────────────────────────────────────────────
 if "history" not in st.session_state:

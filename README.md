@@ -42,3 +42,23 @@ Open docs at:
 
 - Model files are loaded from `artifacts/` at startup.
 - CORS origins are controlled with `FRONTEND_ORIGINS` environment variable.
+
+## Deploy Dark UI on Render
+
+This repo includes a Render Blueprint at `render.yaml` to deploy both:
+
+- `student-performance-api` (FastAPI backend)
+- `sri-center-ui` (Streamlit dark UI)
+
+### Steps
+
+1. Push this repo to GitHub.
+2. In Render, choose **New +** → **Blueprint** and select this repository.
+3. Render will create both services from `render.yaml`.
+4. After first deploy, update `API_BASE` on the `sri-center-ui` service to your real API URL:
+
+	- Example: `https://student-performance-api.onrender.com`
+
+5. Redeploy `sri-center-ui` once after setting `API_BASE`.
+
+The Streamlit app now reads API URL from environment (`API_BASE`) and defaults to `http://127.0.0.1:8000` for local development.
