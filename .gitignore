@@ -4,3 +4,15 @@ student-ui/node_modules/
 student-ui/.next/
 .env
 .env.*
+.venv/
+.vercel/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.DS_Store
+*.egg-info/
+dist/
+build/
+*.csv
+*.zip
