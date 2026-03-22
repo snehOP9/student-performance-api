@@ -13,6 +13,7 @@ FastAPI service for student dropout risk prediction using trained model artifact
 ## API Endpoints
 
 - `GET /` → health check
+- `GET /healthz` → readiness check (fails if model artifacts are not loaded)
 - `POST /predict` → returns `risk_probability`
 - `POST /uncertainty` → conformal prediction set + uncertainty label
 - `POST /recommend` → top risk-reduction recommendations
@@ -25,6 +26,8 @@ python -m venv .venv
 .venv\Scripts\Activate.ps1
 
 pip install -r requirements.txt
+# optional: comma-separated list, example below
+# $env:FRONTEND_ORIGINS="http://localhost:3000,https://your-ui-domain.com"
 uvicorn api.main:app --reload
 ```
 

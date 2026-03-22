@@ -15,6 +15,8 @@ import {
 import { initTheme, toggleTheme } from "@/lib/theme";
 import { useEffect, useMemo, useState } from "react";
 import { fetchOpenAPI, predict, recommend, uncertainty } from "@/lib/api";
+import Hero3D from "./components/hero-3d";
+import Ultra3DPanels from "./components/ultra-3d-panels";
 
 type StudentInputSchema = {
   properties: Record<string, any>;
@@ -267,19 +269,31 @@ export default function Page() {
   }, [risk]);
 
   return (
-    <div className="relative min-h-screen overflow-hidden">
+    <div className="relative min-h-screen overflow-hidden bg-slate-950 text-slate-100">
       {/* Animated Background */}
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-gradient-to-tr from-purple-400/30 to-cyan-400/30 blur-3xl" />
-        <div className="absolute top-20 right-0 h-96 w-96 rounded-full bg-gradient-to-tr from-pink-400/25 to-amber-300/25 blur-3xl" />
-        <div className="absolute bottom-0 left-1/3 h-96 w-96 rounded-full bg-gradient-to-tr from-emerald-400/20 to-blue-400/20 blur-3xl" />
         <motion.div
-          className="absolute inset-0 opacity-[0.06]"
+          className="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-gradient-to-tr from-violet-500/30 to-cyan-400/30 blur-3xl"
+          animate={{ x: [0, 18, -12, 0], y: [0, 12, -10, 0] }}
+          transition={{ duration: 16, repeat: Infinity, ease: "linear" }}
+        />
+        <motion.div
+          className="absolute top-20 right-0 h-96 w-96 rounded-full bg-gradient-to-tr from-pink-500/25 to-amber-300/25 blur-3xl"
+          animate={{ x: [0, -16, 12, 0], y: [0, -14, 10, 0] }}
+          transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
+        />
+        <motion.div
+          className="absolute bottom-0 left-1/3 h-96 w-96 rounded-full bg-gradient-to-tr from-emerald-400/20 to-blue-400/20 blur-3xl"
+          animate={{ x: [0, 14, -14, 0], y: [0, 10, -8, 0] }}
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+        />
+        <motion.div
+          className="absolute inset-0 opacity-[0.08]"
           animate={{ backgroundPosition: ["0% 0%", "100% 100%"] }}
           transition={{ duration: 18, repeat: Infinity, repeatType: "reverse" }}
           style={{
             backgroundImage:
-              "radial-gradient(circle at 1px 1px, rgba(0,0,0,0.6) 1px, transparent 0)",
+              "radial-gradient(circle at 1px 1px, rgba(255,255,255,0.38) 1px, transparent 0)",
             backgroundSize: "22px 22px",
           }}
         />
@@ -292,12 +306,12 @@ export default function Page() {
             <motion.h1
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-3xl font-bold tracking-tight"
+              className="bg-gradient-to-r from-cyan-200 via-violet-200 to-cyan-200 bg-clip-text text-3xl font-black tracking-tight text-transparent"
             >
-              Student Performance Predictor
+              Student Performance Predictor Pro
             </motion.h1>
-            <p className="mt-1 text-sm text-gray-600">
-              Dynamic UI generated from FastAPI OpenAPI schema. Clean. Fast. Deploy-ready.
+            <p className="mt-1 text-sm text-slate-300">
+              Real-time academic risk intelligence with premium motion design and actionable intervention insights.
             </p>
 
             <div className="mt-3 flex flex-wrap gap-2">
@@ -305,32 +319,32 @@ export default function Page() {
                 className={
                   "inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold " +
                   (schemaLoading
-                    ? "bg-white/60 text-gray-700"
-                    : "bg-emerald-50 text-emerald-800 border-emerald-200")
+                    ? "border-slate-400/30 bg-slate-800/70 text-slate-200"
+                    : "border-emerald-300/30 bg-emerald-500/15 text-emerald-200")
                 }
               >
                 {schemaLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
                 {schemaLoading ? "Loading schema…" : "Schema loaded"}
               </span>
 
-              <span className="inline-flex items-center gap-2 rounded-full border bg-white/60 px-3 py-1 text-xs font-semibold text-gray-700">
+              <span className="inline-flex items-center gap-2 rounded-full border border-cyan-300/25 bg-cyan-500/10 px-3 py-1 text-xs font-semibold text-cyan-100">
                 <Zap className="h-3.5 w-3.5" />
-                One-click run
+                One-click inference
               </span>
 
-              <span className="inline-flex items-center gap-2 rounded-full border bg-white/60 px-3 py-1 text-xs font-semibold text-gray-700">
+              <span className="inline-flex items-center gap-2 rounded-full border border-violet-300/25 bg-violet-500/10 px-3 py-1 text-xs font-semibold text-violet-100">
                 <Sparkles className="h-3.5 w-3.5" />
-                Better UX
+                Cinematic UX
               </span>
             </div>
 
             {error && (
-              <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+              <div className="mt-4 rounded-xl border border-red-300/30 bg-red-500/15 px-4 py-3 text-sm text-red-100">
                 <div className="flex items-start gap-2">
                   <AlertTriangle className="mt-0.5 h-4 w-4" />
                   <div className="leading-relaxed">
                     <div className="font-semibold">Error</div>
-                    <div className="text-red-700">{error}</div>
+                    <div className="text-red-200">{error}</div>
                   </div>
                 </div>
               </div>
@@ -344,7 +358,7 @@ export default function Page() {
                 toggleTheme();
                 setDark((d) => !d);
               }}
-              className="inline-flex items-center gap-2 rounded-xl border bg-white/70 px-4 py-2 text-sm font-semibold shadow-sm backdrop-blur hover:bg-white"
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-300/20 bg-slate-900/60 px-4 py-2 text-sm font-semibold text-slate-100 shadow-sm backdrop-blur hover:bg-slate-900"
               type="button"
             >
               {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
@@ -354,7 +368,7 @@ export default function Page() {
             <button
               onClick={fillExample}
               disabled={schemaLoading}
-              className="inline-flex items-center gap-2 rounded-xl border bg-white/70 px-4 py-2 text-sm font-semibold shadow-sm backdrop-blur hover:bg-white disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-300/20 bg-slate-900/60 px-4 py-2 text-sm font-semibold text-slate-100 shadow-sm backdrop-blur hover:bg-slate-900 disabled:opacity-60"
               type="button"
             >
               <Sparkles className="h-4 w-4" />
@@ -364,7 +378,7 @@ export default function Page() {
             <button
               onClick={resetAll}
               disabled={schemaLoading}
-              className="inline-flex items-center gap-2 rounded-xl border bg-white/70 px-4 py-2 text-sm font-semibold shadow-sm backdrop-blur hover:bg-white disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-300/20 bg-slate-900/60 px-4 py-2 text-sm font-semibold text-slate-100 shadow-sm backdrop-blur hover:bg-slate-900 disabled:opacity-60"
               type="button"
             >
               <RefreshCcw className="h-4 w-4" />
@@ -374,7 +388,7 @@ export default function Page() {
             <button
               onClick={runAll}
               disabled={schemaLoading || runLoading}
-              className="inline-flex items-center gap-2 rounded-xl bg-black px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-900 disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-xl bg-cyan-500 px-5 py-2 text-sm font-semibold text-slate-950 shadow-sm hover:bg-cyan-400 disabled:opacity-60"
               type="button"
             >
               {runLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
@@ -383,6 +397,12 @@ export default function Page() {
           </div>
         </div>
 
+        <section className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-2 backdrop-blur-sm">
+          <Hero3D />
+        </section>
+
+        <Ultra3DPanels />
+
         {/* Main grid */}
         <section className="mt-7 grid gap-6 md:grid-cols-2">
           {/* Inputs */}
@@ -390,15 +410,15 @@ export default function Page() {
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.05 }}
-            className="rounded-2xl border bg-white/70 p-5 shadow-sm backdrop-blur"
+            className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-sm backdrop-blur"
           >
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">Inputs</h2>
-              <span className="rounded-full border bg-white px-3 py-1 text-xs font-semibold text-gray-700">
+              <span className="rounded-full border border-cyan-300/25 bg-cyan-500/10 px-3 py-1 text-xs font-semibold text-cyan-100">
                 Ready
               </span>
             </div>
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-slate-300">
               Pro tip: Fill Example → Run All.
             </p>
 
@@ -406,8 +426,8 @@ export default function Page() {
               {/* Numeric */}
               <div>
                 <div className="mb-3 flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-gray-800">Numeric Features</h3>
-                  <span className="text-xs text-gray-500">{numericFields.length} fields</span>
+                  <h3 className="text-sm font-semibold text-slate-100">Numeric Features</h3>
+                  <span className="text-xs text-slate-300">{numericFields.length} fields</span>
                 </div>
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -426,20 +446,20 @@ export default function Page() {
                         : { min: 0, max: 300, step: isFloat ? 0.1 : 1 };
 
                     return (
-                      <div key={f.name} className="rounded-xl border bg-white p-3 shadow-sm">
+                      <div key={f.name} className="rounded-xl border border-white/10 bg-slate-900/50 p-3 shadow-sm">
                         <div className="flex items-start justify-between gap-2">
                           <div>
                             <div className="flex items-center gap-2">
-                              <div className="text-xs font-semibold text-gray-800">{f.title}</div>
+                              <div className="text-xs font-semibold text-slate-100">{f.title}</div>
                               {f.required && (
-                                <span className="rounded-full border px-2 py-0.5 text-[10px] font-semibold text-gray-700">
+                                <span className="rounded-full border border-white/20 px-2 py-0.5 text-[10px] font-semibold text-slate-200">
                                   required
                                 </span>
                               )}
                             </div>
-                            <div className="mt-1 text-[11px] text-gray-500">{f.name}</div>
+                            <div className="mt-1 text-[11px] text-slate-400">{f.name}</div>
                           </div>
-                          <div className="text-xs font-semibold text-gray-900">{niceNumber(value)}</div>
+                          <div className="text-xs font-semibold text-slate-100">{niceNumber(value)}</div>
                         </div>
 
                         <div className="mt-3 grid grid-cols-1 gap-2">
@@ -455,7 +475,7 @@ export default function Page() {
                             }
                           />
                           <input
-                            className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
+                            className="w-full rounded-lg border border-white/15 bg-slate-900/60 px-3 py-2 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-300/30"
                             type="number"
                             step={f.type === "integer" ? 1 : "any"}
                             value={value}
@@ -470,14 +490,14 @@ export default function Page() {
 
               {/* Demographics */}
               <div>
-                <h3 className="text-sm font-semibold text-gray-800">Demographics (choose one)</h3>
+                <h3 className="text-sm font-semibold text-slate-100">Demographics (choose one)</h3>
                 <div className="mt-3 space-y-4">
                   {Object.entries(groups).map(([label, grp]) => {
                     const selected = grp.options.find((o) => form[o] === 1) || grp.options[0];
 
                     return (
-                      <div key={label} className="rounded-xl border bg-white p-4 shadow-sm">
-                        <div className="mb-2 text-xs font-semibold text-gray-700">{label}</div>
+                      <div key={label} className="rounded-xl border border-white/10 bg-slate-900/50 p-4 shadow-sm">
+                        <div className="mb-2 text-xs font-semibold text-slate-200">{label}</div>
                         <div className="flex flex-wrap gap-2">
                           {grp.options.map((o) => {
                             const optLabel = titleize(
@@ -493,8 +513,8 @@ export default function Page() {
                                 className={
                                   "rounded-full px-3 py-1.5 text-xs font-semibold border transition " +
                                   (active
-                                    ? "bg-black text-white border-black shadow-sm"
-                                    : "bg-white text-gray-800 hover:bg-gray-50")
+                                    ? "bg-cyan-500 text-slate-950 border-cyan-400 shadow-sm"
+                                    : "bg-slate-900 text-slate-100 border-white/15 hover:bg-slate-800")
                                 }
                               >
                                 {optLabel}
@@ -510,20 +530,20 @@ export default function Page() {
 
               {/* Binary */}
               <div>
-                <h3 className="text-sm font-semibold text-gray-800">Access</h3>
+                <h3 className="text-sm font-semibold text-slate-100">Access</h3>
                 <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
                   {binaryFields.map((name) => {
                     const v = form[name] ?? 0;
                     return (
-                      <div key={name} className="rounded-xl border bg-white p-4 shadow-sm">
-                        <div className="text-xs font-semibold text-gray-800">{titleize(name)}</div>
+                      <div key={name} className="rounded-xl border border-white/10 bg-slate-900/50 p-4 shadow-sm">
+                        <div className="text-xs font-semibold text-slate-100">{titleize(name)}</div>
                         <div className="mt-3 flex gap-2">
                           <button
                             type="button"
                             onClick={() => setForm({ ...form, [name]: 1 })}
                             className={
                               "flex-1 rounded-xl px-3 py-2 text-xs font-semibold border transition " +
-                              (v === 1 ? "bg-black text-white border-black" : "bg-white hover:bg-gray-50")
+                              (v === 1 ? "bg-cyan-500 text-slate-950 border-cyan-400" : "bg-slate-900 text-slate-100 border-white/15 hover:bg-slate-800")
                             }
                           >
                             Yes
@@ -533,7 +553,7 @@ export default function Page() {
                             onClick={() => setForm({ ...form, [name]: 0 })}
                             className={
                               "flex-1 rounded-xl px-3 py-2 text-xs font-semibold border transition " +
-                              (v === 0 ? "bg-black text-white border-black" : "bg-white hover:bg-gray-50")
+                              (v === 0 ? "bg-cyan-500 text-slate-950 border-cyan-400" : "bg-slate-900 text-slate-100 border-white/15 hover:bg-slate-800")
                             }
                           >
                             No
@@ -552,14 +572,14 @@ export default function Page() {
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.08 }}
-            className="rounded-2xl border bg-white/70 p-5 shadow-sm backdrop-blur"
+            className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-sm backdrop-blur"
           >
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">Results</h2>
 
               <button
                 onClick={copyResults}
-                className="inline-flex items-center gap-2 rounded-xl border bg-white/70 px-3 py-2 text-xs font-semibold hover:bg-white"
+                className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-slate-900/60 px-3 py-2 text-xs font-semibold text-slate-100 hover:bg-slate-900"
                 type="button"
               >
                 {copied ? <CheckCircle2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
@@ -568,22 +588,22 @@ export default function Page() {
             </div>
 
             {/* Risk Meter */}
-            <div className="mt-4 rounded-2xl border bg-white p-4 shadow-sm">
+            <div className="mt-4 rounded-2xl border border-white/10 bg-slate-900/50 p-4 shadow-sm">
               <div className="flex items-center justify-between">
-                <div className="text-xs font-semibold text-gray-700">Risk Meter</div>
-                <div className="text-xs font-semibold text-gray-900">
+                <div className="text-xs font-semibold text-slate-200">Risk Meter</div>
+                <div className="text-xs font-semibold text-slate-100">
                   {riskScore === null ? "—" : `${Math.round(riskScore * 100)}%`}
                 </div>
               </div>
-              <div className="mt-3 h-3 w-full rounded-full bg-gray-100 overflow-hidden">
+              <div className="mt-3 h-3 w-full overflow-hidden rounded-full bg-slate-800">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: riskScore === null ? "0%" : `${riskScore * 100}%` }}
                   transition={{ type: "spring", stiffness: 120, damping: 18 }}
-                  className="h-full rounded-full bg-black"
+                  className="h-full rounded-full bg-cyan-400"
                 />
               </div>
-              <div className="mt-2 text-[11px] text-gray-500">
+              <div className="mt-2 text-[11px] text-slate-400">
                 (Auto-detected from response if numeric value exists.)
               </div>
             </div>
@@ -610,7 +630,7 @@ export default function Page() {
               />
             </div>
 
-            <div className="mt-6 text-xs text-gray-500">
+            <div className="mt-6 text-xs text-slate-400">
               Local dev: backend (8000) + UI (3000). If hosted separately, ensure CORS or use Next proxy.
             </div>
           </motion.div>
@@ -639,9 +659,9 @@ function ResultCard({
   loading: boolean;
 }) {
   return (
-    <div className="rounded-2xl border bg-white p-4 shadow-sm">
-      <div className="flex items-center gap-2 text-xs font-semibold text-gray-700">
-        <span className="inline-flex items-center justify-center rounded-lg border bg-white p-1">
+    <div className="rounded-2xl border border-white/10 bg-slate-900/50 p-4 shadow-sm">
+      <div className="flex items-center gap-2 text-xs font-semibold text-slate-200">
+        <span className="inline-flex items-center justify-center rounded-lg border border-white/15 bg-slate-900 p-1 text-cyan-200">
           {icon}
         </span>
         {title}
@@ -650,12 +670,12 @@ function ResultCard({
       <div className="mt-3">
         {loading ? (
           <div className="space-y-2">
-            <div className="h-3 w-5/6 rounded bg-gray-100 animate-pulse" />
-            <div className="h-3 w-4/6 rounded bg-gray-100 animate-pulse" />
-            <div className="h-3 w-3/6 rounded bg-gray-100 animate-pulse" />
+            <div className="h-3 w-5/6 animate-pulse rounded bg-slate-800" />
+            <div className="h-3 w-4/6 animate-pulse rounded bg-slate-800" />
+            <div className="h-3 w-3/6 animate-pulse rounded bg-slate-800" />
           </div>
         ) : (
-          <pre className="text-xs whitespace-pre-wrap text-gray-800">
+          <pre className="whitespace-pre-wrap text-xs text-slate-200">
             {data ? JSON.stringify(data, null, 2) : "—"}
           </pre>
         )}

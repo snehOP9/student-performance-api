@@ -1,0 +1,27 @@
+{
+  "name": "sic-project-workspace",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix \"d:\\SIC_Project\\student-performance-predictor-pro\" run dev -- --port 3000",
+    "build": "npm --prefix \"d:\\SIC_Project\\student-performance-predictor-pro\" run build",
+    "dev:student-ui": "npm --prefix \"d:\\SIC_Project\\student-ui\" run dev -- -p 3001",
+    "dev:spp-pro": "npm --prefix \"d:\\SIC_Project\\spp-pro\" run dev -- --port 3002"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^5.2.2",
+    "@tailwindcss/vite": "^4.2.2",
+    "axios": "^1.13.6",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "framer-motion": "^12.38.0",
+    "lucide-react": "^0.577.0",
+    "react-hook-form": "^7.72.0",
+    "react-router-dom": "^7.13.1",
+    "recharts": "^3.8.0",
+    "sonner": "^2.0.7",
+    "tailwind-merge": "^3.5.0",
+    "tailwindcss": "^4.2.2",
+    "zod": "^4.3.6",
+    "zustand": "^5.0.12"
+  }
+}

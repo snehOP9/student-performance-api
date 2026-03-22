@@ -7,5 +7,13 @@ joblib==1.4.2
 fastapi==0.115.0
 uvicorn==0.30.6
 pydantic==2.8.2
+pydantic[email]==2.8.2
+sqlalchemy==2.0.37
+psycopg[binary]==3.2.3
+python-jose==3.3.0
+passlib[bcrypt]==1.7.4
+pyotp==2.9.0
+requests==2.32.3
+python-multipart==0.0.19
 streamlit==1.37.1
 matplotlib==3.9.2
