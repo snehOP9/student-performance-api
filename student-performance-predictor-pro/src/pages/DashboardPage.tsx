@@ -1,55 +1,147 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { Area, AreaChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { Activity, AlarmClockCheck, BookOpenCheck, CalendarCheck2, MousePointerClick } from 'lucide-react'
-import { kpiData } from '../data/mock'
-import { MetricCard } from '../components/common/MetricCard'
-import { ChartCard } from '../components/charts/ChartCard'
+import {
+  Activity,
+  AlarmClockCheck,
+  ArrowRight,
+  BookOpenCheck,
+  CalendarCheck2,
+  MousePointerClick,
+  ShieldCheck,
+} from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { AnimatedCounter } from '../components/common/AnimatedCounter'
 import { AIChatbot } from '../components/common/AIChatbot'
-import { SectionTitle } from '../components/common/SectionTitle'
-import { SearchFilters } from '../components/common/SearchFilters'
-import { SkeletonCard } from '../components/common/SkeletonCard'
-import { GuidedTourCard } from '../components/common/GuidedTourCard'
-import { ActivityTimeline } from '../components/common/ActivityTimeline'
 import { ChecklistCard } from '../components/common/ChecklistCard'
+import { GuidedTourCard } from '../components/common/GuidedTourCard'
+import { MetricCard } from '../components/common/MetricCard'
+import { MotionPage } from '../components/common/MotionPage'
+import { SearchFilters } from '../components/common/SearchFilters'
+import { SectionTitle } from '../components/common/SectionTitle'
+import { ActivityTimeline } from '../components/common/ActivityTimeline'
+import { AnalyticsPillarsScene } from '../components/three/AnalyticsPillarsScene'
+import { ChartCard } from '../components/charts/ChartCard'
+import { Badge } from '../components/ui/badge'
+import { Button } from '../components/ui/button'
+import { Card } from '../components/ui/card'
+import { kpiData } from '../data/mock'
+import { useAppStore } from '../store/appStore'
 
 export function DashboardPage() {
-  const [loading] = useState(false)
+  const { assessmentDraft, currentPrediction, currentUncertainty, currentRecommendations } = useAppStore()
+
   const kpis = useMemo(
     () => [
-      { title: 'Risk score', value: '41.6%', delta: '-5.2 this week', icon: Activity },
-      { title: 'Attendance health', value: '89%', delta: '+3.1%', icon: CalendarCheck2 },
-      { title: 'Study consistency', value: '78%', delta: '+8.4%', icon: BookOpenCheck },
-      { title: 'Sleep quality', value: '7.3h', delta: '+0.4h', icon: AlarmClockCheck },
-      { title: 'Resource engagement', value: '84', delta: '+11 clicks', icon: MousePointerClick },
+      { title: 'Risk score', value: `${currentPrediction.risk_probability.toFixed(1)}%`, delta: 'Most recent model output', icon: Activity },
+      { title: 'Attendance health', value: `${Math.round(assessmentDraft.attendance_mean * 100)}%`, delta: 'Latest assessment snapshot', icon: CalendarCheck2 },
+      { title: 'Study consistency', value: `${Math.round(assessmentDraft.consistency_score_mean)}%`, delta: 'Latest assessment snapshot', icon: BookOpenCheck },
+      { title: 'Sleep quality', value: `${assessmentDraft.sleep_mean.toFixed(1)}h`, delta: 'Latest assessment snapshot', icon: AlarmClockCheck },
+      { title: 'Resource engagement', value: `${assessmentDraft.resources_sum}`, delta: 'Resources opened in the latest draft', icon: MousePointerClick },
     ],
-    [],
+    [assessmentDraft.attendance_mean, assessmentDraft.resources_sum, assessmentDraft.sleep_mean, currentPrediction.risk_probability],
   )
 
   return (
-    <div className="space-y-6">
-      <SectionTitle title="Main Dashboard" subtitle="Premium AI command center" />
+    <MotionPage className="space-y-6">
+      <SectionTitle
+        eyebrow="Main hub"
+        title="AI command center"
+        subtitle="A live premium workspace for tracking current student health, interventions, and confidence-aware predictions."
+        action={
+          <Link to="/assessment">
+            <Button>
+              Run fresh prediction
+              <ArrowRight className="ml-2 size-4" />
+            </Button>
+          </Link>
+        }
+      />
+
+      <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
+        <Card className="overflow-hidden border-cyan-300/20 bg-[linear-gradient(135deg,rgba(8,15,34,0.94),rgba(8,15,34,0.78),rgba(34,211,238,0.08))]">
+          <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
+            <div>
+              <Badge>Live prediction core</Badge>
+              <h2 className="mt-4 text-4xl font-bold text-white">
+                Current risk:
+                <span className="aurora-text block">
+                  <AnimatedCounter value={currentPrediction.risk_probability} decimals={1} suffix="%" />
+                </span>
+              </h2>
+              <p className="mt-4 text-slate-300">
+                The model is currently reading a {currentPrediction.risk_band.toLowerCase()} risk pattern driven by
+                attendance variance, concentrated study windows, and recovery momentum.
+              </p>
+              <div className="mt-6 grid gap-3 sm:grid-cols-3">
+                <Card className="bg-white/5 p-4">
+                  <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Confidence</p>
+                  <p className="mt-2 text-2xl font-bold text-white">
+                    <AnimatedCounter value={currentUncertainty.confidence * 100} suffix="%" />
+                  </p>
+                </Card>
+                <Card className="bg-white/5 p-4">
+                  <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Next best action</p>
+                  <p className="mt-2 text-sm text-slate-200">{currentRecommendations[0]?.title ?? 'Stabilize attendance rhythm'}</p>
+                </Card>
+                <Card className="bg-white/5 p-4">
+                  <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Safety layer</p>
+                  <p className="mt-2 flex items-center gap-2 text-sm text-emerald-200">
+                    <ShieldCheck className="size-4" />
+                    Confidence-aware output enabled
+                  </p>
+                </Card>
+              </div>
+            </div>
+
+            <AnalyticsPillarsScene values={kpiData.map((item) => item.attendance)} />
+          </div>
+        </Card>
+
+        <Card className="bg-[linear-gradient(135deg,rgba(8,15,34,0.88),rgba(8,15,34,0.72),rgba(99,102,241,0.1))]">
+          <p className="text-[0.7rem] uppercase tracking-[0.28em] text-cyan-200/80">Operator note</p>
+          <h3 className="mt-3 text-2xl font-semibold text-white">AI insights panel</h3>
+          <div className="mt-5 space-y-3">
+            {currentPrediction.explanation.map((item) => (
+              <div key={item} className="rounded-[1.35rem] border border-white/8 bg-white/6 p-4 text-sm text-slate-200">
+                {item}
+              </div>
+            ))}
+          </div>
+          <div className="mt-5 rounded-[1.35rem] border border-cyan-300/20 bg-cyan-400/10 p-4">
+            <p className="text-xs uppercase tracking-[0.24em] text-cyan-100/80">Strategic read</p>
+            <p className="mt-2 text-sm text-slate-100">
+              Confidence is healthy enough to act now, but keeping the next 7-day attendance streak stable will reduce the
+              residual uncertainty fastest.
+            </p>
+          </div>
+        </Card>
+      </div>
+
       <SearchFilters />
       <GuidedTourCard />
+
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-        {loading ? kpis.map((x) => <SkeletonCard key={x.title} />) : kpis.map((kpi) => <MetricCard key={kpi.title} {...kpi} />)}
+        {kpis.map((kpi) => (
+          <MetricCard key={kpi.title} {...kpi} />
+        ))}
       </div>
 
       <div className="grid gap-4 xl:grid-cols-3">
         <div className="xl:col-span-2">
-          <ChartCard title="Risk trend timeline" subtitle="Daily probability trajectory">
+          <ChartCard title="Risk trajectory" subtitle="Probability drift across the last active week">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={kpiData}>
                 <defs>
-                  <linearGradient id="risk" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="0%" stopColor="#22d3ee" stopOpacity={0.55} />
-                    <stop offset="100%" stopColor="#22d3ee" stopOpacity={0.08} />
+                  <linearGradient id="risk-area" x1="0" x2="0" y1="0" y2="1">
+                    <stop offset="0%" stopColor="#67e8f9" stopOpacity={0.5} />
+                    <stop offset="100%" stopColor="#67e8f9" stopOpacity={0.05} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid stroke="#334155" strokeDasharray="3 3" />
+                <CartesianGrid stroke="#243042" strokeDasharray="3 3" />
                 <XAxis dataKey="name" stroke="#94a3b8" />
                 <YAxis stroke="#94a3b8" />
-                <Tooltip />
-                <Area type="monotone" dataKey="risk" stroke="#22d3ee" fill="url(#risk)" />
+                <Tooltip contentStyle={{ background: '#061327', border: '1px solid rgba(103,232,249,0.18)' }} />
+                <Area type="monotone" dataKey="risk" stroke="#67e8f9" strokeWidth={2.4} fill="url(#risk-area)" />
               </AreaChart>
             </ResponsiveContainer>
           </ChartCard>
@@ -58,15 +150,15 @@ export function DashboardPage() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <ChartCard title="Progress trends" subtitle="Attendance vs study consistency">
+        <ChartCard title="Attendance vs study rhythm" subtitle="Momentum view across key behavioral signals">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={kpiData}>
-              <CartesianGrid stroke="#334155" strokeDasharray="3 3" />
+              <CartesianGrid stroke="#243042" strokeDasharray="3 3" />
               <XAxis dataKey="name" stroke="#94a3b8" />
               <YAxis stroke="#94a3b8" />
-              <Tooltip />
-              <Line type="monotone" dataKey="attendance" stroke="#14b8a6" strokeWidth={2} />
-              <Line type="monotone" dataKey="study" stroke="#a78bfa" strokeWidth={2} />
+              <Tooltip contentStyle={{ background: '#061327', border: '1px solid rgba(103,232,249,0.18)' }} />
+              <Line type="monotone" dataKey="attendance" stroke="#2dd4bf" strokeWidth={2.4} />
+              <Line type="monotone" dataKey="study" stroke="#a78bfa" strokeWidth={2.4} />
             </LineChart>
           </ResponsiveContainer>
         </ChartCard>
@@ -75,11 +167,16 @@ export function DashboardPage() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <ActivityTimeline />
-        <ChartCard title="Recent predictions" subtitle="Quick history table">
+        <ChartCard title="Recent prediction samples" subtitle="Quick-glance history stream">
           <div className="overflow-auto">
             <table className="w-full text-left text-sm">
               <thead className="text-slate-400">
-                <tr><th>Date</th><th>Risk</th><th>Band</th><th>Confidence</th></tr>
+                <tr>
+                  <th className="pb-3">Date</th>
+                  <th className="pb-3">Risk</th>
+                  <th className="pb-3">Band</th>
+                  <th className="pb-3">Confidence</th>
+                </tr>
               </thead>
               <tbody>
                 {[
@@ -88,7 +185,11 @@ export function DashboardPage() {
                   ['2026-03-12', '54.2%', 'High', '84%'],
                 ].map((row) => (
                   <tr key={row[0]} className="border-t border-white/10 text-slate-200">
-                    {row.map((cell) => <td key={cell} className="py-2">{cell}</td>)}
+                    {row.map((cell) => (
+                      <td key={cell} className="py-3">
+                        {cell}
+                      </td>
+                    ))}
                   </tr>
                 ))}
               </tbody>
@@ -96,6 +197,6 @@ export function DashboardPage() {
           </div>
         </ChartCard>
       </div>
-    </div>
+    </MotionPage>
   )
 }

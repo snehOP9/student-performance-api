@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 from dotenv import load_dotenv
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 # Load environment variables from .env file
@@ -30,3 +30,11 @@ def init_db() -> None:
     from . import models
 
     Base.metadata.create_all(bind=engine)
+    with engine.begin() as conn:
+        inspector = inspect(conn)
+        if 'users' in inspector.get_table_names():
+            user_columns = {column['name'] for column in inspector.get_columns('users')}
+            if 'session_version' not in user_columns:
+                conn.execute(
+                    text('ALTER TABLE users ADD COLUMN session_version INTEGER NOT NULL DEFAULT 0')
+                )

@@ -1,44 +1,63 @@
 import { NavLink } from 'react-router-dom'
-import { BarChart3, Building2, ClipboardPenLine, Compass, Contact, Gauge, History, Home, Landmark, Lightbulb, Settings, User, Users } from 'lucide-react'
+import {
+  Home,
+} from 'lucide-react'
 import { cn } from '../../lib/utils'
+import { useAppStore } from '../../store/appStore'
+import { getManagementLinks, getWorkspaceLinks } from './navigation'
 
-const items = [
-  { to: '/dashboard', label: 'Dashboard', icon: Home },
-  { to: '/assessment', label: 'Assessment', icon: ClipboardPenLine },
-  { to: '/prediction', label: 'Prediction', icon: Gauge },
-  { to: '/recommendations', label: 'Recommendations', icon: Lightbulb },
-  { to: '/analytics', label: 'Analytics', icon: BarChart3 },
-  { to: '/institutional', label: 'Institutional', icon: Building2 },
-  { to: '/teacher', label: 'Teacher', icon: Users },
-  { to: '/profile', label: 'Student Profile', icon: User },
-  { to: '/history', label: 'History', icon: History },
-  { to: '/compare', label: 'Compare Profiles', icon: Compass },
-  { to: '/roadmap', label: 'Roadmap', icon: Landmark },
-  { to: '/about', label: 'Methodology', icon: Contact },
-  { to: '/support', label: 'Support', icon: Contact },
-  { to: '/settings', label: 'Settings', icon: Settings },
-]
-
-export function Sidebar() {
+function NavSection({
+  label,
+  items,
+}: {
+  label: string
+  items: Array<{ to: string; label: string; icon: typeof Home }>
+}) {
   return (
-    <aside className="sticky top-16 hidden h-[calc(100vh-4rem)] overflow-auto border-r border-white/10 bg-slate-950/60 px-3 py-6 lg:block lg:w-72">
-      <nav className="space-y-1">
-        {items.map(({ to, label, icon: Icon }) => (
+    <div>
+      <p className="mb-2 px-2 text-[0.65rem] uppercase tracking-[0.28em] text-slate-500">{label}</p>
+      <nav className="space-y-1.5">
+        {items.map(({ to, label: itemLabel, icon: Icon }) => (
           <NavLink
             key={to}
             to={to}
             className={({ isActive }) =>
               cn(
-                'flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm text-slate-300 transition hover:bg-white/10',
-                isActive && 'bg-cyan-400/15 text-cyan-200',
+                'flex items-center gap-3 rounded-[1.15rem] px-3 py-3 text-sm text-slate-300 transition hover:bg-white/8 hover:text-white',
+                isActive && 'bg-[linear-gradient(135deg,rgba(34,211,238,0.16),rgba(99,102,241,0.08))] text-cyan-100 shadow-[0_18px_50px_-35px_rgba(34,211,238,0.95)]',
               )
             }
           >
             <Icon className="size-4" />
-            {label}
+            {itemLabel}
           </NavLink>
         ))}
       </nav>
+    </div>
+  )
+}
+
+export function Sidebar() {
+  const role = useAppStore((state) => state.currentUser?.role)
+  const workspaceLinks = getWorkspaceLinks(role)
+  const managementLinks = getManagementLinks(role)
+
+  return (
+    <aside className="sticky top-24 hidden h-[calc(100vh-7rem)] overflow-auto lg:block lg:w-[19rem]">
+      <div className="glass-panel rounded-[2rem] border border-white/10 p-4">
+        <div className="mb-6 rounded-[1.5rem] border border-cyan-300/15 bg-[linear-gradient(135deg,rgba(34,211,238,0.12),rgba(99,102,241,0.06))] p-4">
+          <p className="text-[0.7rem] uppercase tracking-[0.28em] text-cyan-200/80">Neural cockpit</p>
+          <h3 className="mt-2 text-lg font-semibold text-white">Student Performance Predictor Pro</h3>
+          <p className="mt-2 text-sm text-slate-400">
+            Premium academic intelligence, intervention design, and cohort-level forecasting.
+          </p>
+        </div>
+
+        <div className="space-y-6">
+          <NavSection label="Workspace" items={workspaceLinks} />
+          <NavSection label="Operations" items={managementLinks} />
+        </div>
+      </div>
     </aside>
   )
 }

@@ -1,5 +1,6 @@
 import hashlib
 import os
+import secrets
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 import pyotp
@@ -8,11 +9,21 @@ from passlib.context import CryptContext
 
 pwd_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
 
-SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'change-me-in-env')
+def _load_secret_key() -> str:
+    secret = os.getenv('JWT_SECRET_KEY', '').strip()
+    if not secret:
+        return secrets.token_urlsafe(48)
+    if secret == 'change-me-in-env' or len(secret) < 32:
+        raise RuntimeError('JWT_SECRET_KEY must be set to a strong 32+ character value')
+    return secret
+
+
+SECRET_KEY = _load_secret_key()
 ALGORITHM = 'HS256'
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv('ACCESS_TOKEN_EXPIRE_MINUTES', '15'))
 REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv('REFRESH_TOKEN_EXPIRE_DAYS', '7'))
 TEMP_2FA_TOKEN_EXPIRE_MINUTES = int(os.getenv('TEMP_2FA_TOKEN_EXPIRE_MINUTES', '5'))
+SETUP_2FA_TOKEN_EXPIRE_MINUTES = int(os.getenv('SETUP_2FA_TOKEN_EXPIRE_MINUTES', '10'))
 
 
 def hash_password(password: str) -> str:
@@ -23,11 +34,12 @@ def verify_password(password: str, hashed_password: str) -> bool:
     return pwd_context.verify(password, hashed_password)
 
 
-def create_access_token(subject: str, role: str) -> str:
+def create_access_token(subject: str, role: str, session_version: int) -> str:
     now = datetime.now(timezone.utc)
     payload = {
         'sub': subject,
         'role': role,
+        'sv': session_version,
         'type': 'access',
         'iat': int(now.timestamp()),
         'exp': int((now + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)).timestamp()),
@@ -35,13 +47,14 @@ def create_access_token(subject: str, role: str) -> str:
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
 
-def create_refresh_token(subject: str) -> tuple[str, str, datetime]:
+def create_refresh_token(subject: str, session_version: int) -> tuple[str, str, datetime]:
     now = datetime.now(timezone.utc)
     expires = now + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
     jti = str(uuid4())
     payload = {
         'sub': subject,
         'type': 'refresh',
+        'sv': session_version,
         'jti': jti,
         'iat': int(now.timestamp()),
         'exp': int(expires.timestamp()),
@@ -57,6 +70,18 @@ def create_temp_2fa_token(subject: str) -> str:
         'type': '2fa-temp',
         'iat': int(now.timestamp()),
         'exp': int((now + timedelta(minutes=TEMP_2FA_TOKEN_EXPIRE_MINUTES)).timestamp()),
+    }
+    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+
+
+def create_2fa_setup_token(subject: str, secret: str) -> str:
+    now = datetime.now(timezone.utc)
+    payload = {
+        'sub': subject,
+        'secret': secret,
+        'type': '2fa-setup',
+        'iat': int(now.timestamp()),
+        'exp': int((now + timedelta(minutes=SETUP_2FA_TOKEN_EXPIRE_MINUTES)).timestamp()),
     }
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 

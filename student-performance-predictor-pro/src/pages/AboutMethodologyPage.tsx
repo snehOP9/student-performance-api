@@ -1,28 +1,25 @@
-import { Card } from '../components/ui/card'
+import { MotionPage } from '../components/common/MotionPage'
 import { SectionTitle } from '../components/common/SectionTitle'
+import { Card } from '../components/ui/card'
 
 export function AboutMethodologyPage() {
   return (
-    <div className="space-y-6">
-      <SectionTitle title="About / Methodology" subtitle="Transparent model behavior, uncertainty, ethics, and privacy" />
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <h3 className="text-lg font-semibold">How prediction works</h3>
-          <p className="mt-2 text-sm text-slate-300">The model combines behavior, engagement, attendance, sleep, and demographic/education indicators to estimate academic risk probability.</p>
-        </Card>
-        <Card>
-          <h3 className="text-lg font-semibold">Risk score + uncertainty</h3>
-          <p className="mt-2 text-sm text-slate-300">Risk score indicates probability of risk, while uncertainty reflects confidence around that estimate for safer decision-making.</p>
-        </Card>
-        <Card>
-          <h3 className="text-lg font-semibold">Responsible AI</h3>
-          <p className="mt-2 text-sm text-slate-300">Recommendations are assistive, non-punitive, and should always be reviewed with human context and support systems.</p>
-        </Card>
-        <Card>
-          <h3 className="text-lg font-semibold">Ethics & privacy</h3>
-          <p className="mt-2 text-sm text-slate-300">Use minimum necessary data, protect identity, and provide transparent explanations for all high-impact decisions.</p>
-        </Card>
+    <MotionPage className="space-y-6">
+      <SectionTitle
+        eyebrow="Methodology"
+        title="How the model thinks"
+        subtitle="A concise explanation of how feature signals, uncertainty, and recommendation generation come together inside the product."
+      />
+
+      <div className="grid gap-4 lg:grid-cols-3">
+        {[
+          'Behavioral features such as attendance, sleep, engagement, and study rhythm shape the prediction.',
+          'Uncertainty estimates show when the model is stable enough for immediate action and when more context is needed.',
+          'Recommendations translate risk drivers into operational interventions with expected impact.',
+        ].map((item) => (
+          <Card key={item}>{item}</Card>
+        ))}
       </div>
-    </div>
+    </MotionPage>
   )
 }

@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Button, Input, Select, Card } from '../components/ui';
 import { ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Button, Card, Input, Select } from '../components/ui';
+import { apiService } from '../services/api';
 import { useStore } from '../store';
 
 export const SignupPage = () => {
@@ -14,37 +15,39 @@ export const SignupPage = () => {
   });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { setUser } = useStore();
+  const { setError } = useStore();
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
 
-    // Simulate account creation
-    setTimeout(() => {
-      setUser({
-        id: '1',
-        email: formData.email,
+    try {
+      await apiService.signup({
         full_name: formData.fullName,
-        role: formData.role as 'student' | 'teacher' | 'admin',
-        created_at: new Date().toISOString(),
+        email: formData.email,
+        password: formData.password,
+        role: formData.role as 'student' | 'teacher',
       });
-      navigate('/dashboard');
+      navigate('/login');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Signup failed.';
+      setError(message);
+    } finally {
       setLoading(false);
-    }, 500);
+    }
   };
 
   const benefits = [
     'Instant AI-powered risk assessment',
     'Personalized improvement recommendations',
     'Real-time performance analytics',
-    'Secure data encryption & GDPR compliant',
+    'Secure data encryption and GDPR alignment',
   ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center px-4 py-8">
       <div className="grid md:grid-cols-2 gap-8 max-w-5xl w-full">
-        {/* Left - Benefits */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -71,15 +74,8 @@ export const SignupPage = () => {
               </motion.div>
             ))}
           </div>
-
-          <Card className="p-4 bg-blue-500/10 border-blue-500/30">
-            <p className="text-sm text-blue-200">
-              <span className="font-semibold">🎉 Limited Time:</span> First assessment free for new users!
-            </p>
-          </Card>
         </motion.div>
 
-        {/* Right - Form */}
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -113,14 +109,13 @@ export const SignupPage = () => {
                 options={[
                   { value: 'student', label: 'Student' },
                   { value: 'teacher', label: 'Teacher/Educator' },
-                  { value: 'admin', label: 'Institutional Admin' },
                 ]}
               />
 
               <Input
                 type="password"
                 label="Password"
-                placeholder="••••••••"
+                placeholder="Create a password"
                 value={formData.password}
                 onChange={(val) => setFormData({ ...formData, password: val })}
                 required
@@ -137,30 +132,10 @@ export const SignupPage = () => {
               </Button>
             </form>
 
-            {/* Social Signup */}
-            <div className="mt-6">
-              <div className="relative mb-6">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-white/10" />
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-slate-900 text-slate-400">Or sign up with</span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <Button variant="secondary">
-                  <span>🔵</span>
-                  Google
-                </Button>
-                <Button variant="secondary">
-                  <span>🔗</span>
-                  GitHub
-                </Button>
-              </div>
+            <div className="mt-6 rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-slate-400">
+              Social signup is intentionally hidden until backend OAuth endpoints are available.
             </div>
 
-            {/* Login Link */}
             <p className="mt-6 text-center text-slate-400 text-sm">
               Already have an account?{' '}
               <button

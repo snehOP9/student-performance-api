@@ -1,47 +1,115 @@
+import type { ReactNode } from 'react'
 import { useState } from 'react'
-import { Link, useSearchParams, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { motion } from 'framer-motion'
+import { ArrowRight, ShieldEllipsis, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
+import { NeuralHeroScene } from '../components/three/NeuralHeroScene'
 import { Button } from '../components/ui/button'
 import { Card } from '../components/ui/card'
 import { Input } from '../components/ui/input'
-import { forgotPassword, login, resetPassword, signup, socialLogin, verify2FA } from '../lib/api'
+import { fetchMe, forgotPassword, login, resetPassword, signup, verify2FA } from '../lib/api'
+import { storeSessionTokens } from '../lib/session'
+import { useAppStore } from '../store/appStore'
 
-const schema = z.object({
+const loginSchema = z.object({
   email: z.string().email('Valid email required'),
   password: z.string().min(6, 'Minimum 6 characters'),
 })
 
-type Values = z.infer<typeof schema>
+type LoginValues = z.infer<typeof loginSchema>
 
-function AuthLayout({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }) {
+const signupSchema = z.object({
+  full_name: z.string().min(2, 'Full name is required'),
+  email: z.string().email('Valid email required'),
+  password: z.string().min(8, 'Minimum 8 characters'),
+  role: z.enum(['student', 'teacher']),
+})
+
+type SignupValues = z.infer<typeof signupSchema>
+
+function AuthLayout({
+  title,
+  subtitle,
+  spotlight,
+  children,
+}: {
+  title: string
+  subtitle: string
+  spotlight: string
+  children: ReactNode
+}) {
   return (
-    <div className="grid min-h-screen bg-slate-950 lg:grid-cols-2">
-      <div className="hidden bg-[radial-gradient(circle_at_center,#22d3ee22,transparent_50%)] p-10 lg:flex lg:flex-col lg:justify-between">
-        <div>
-          <p className="text-cyan-200">Student Performance Predictor Pro</p>
-          <h2 className="mt-3 text-4xl font-bold text-white">AI-powered academic intelligence</h2>
+    <div className="min-h-screen overflow-hidden">
+      <div className="grid min-h-screen lg:grid-cols-[1.08fr_0.92fr]">
+        <div className="relative hidden overflow-hidden border-r border-white/10 bg-[linear-gradient(180deg,rgba(2,6,23,0.9),rgba(2,6,23,0.72))] px-8 py-10 lg:flex lg:flex-col lg:justify-between">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.16),transparent_28%),radial-gradient(circle_at_top_right,rgba(139,92,246,0.18),transparent_34%)]" />
+          <div className="relative z-10">
+            <p className="text-[0.72rem] uppercase tracking-[0.34em] text-cyan-300/80">
+              Student Performance Predictor Pro
+            </p>
+            <h1 className="mt-6 max-w-xl text-5xl font-bold leading-[0.95] text-white">
+              Secure access to your
+              <span className="aurora-text block">AI performance cockpit.</span>
+            </h1>
+            <p className="mt-5 max-w-xl text-base text-slate-300">{spotlight}</p>
+          </div>
+
+          <div className="relative z-10 mt-10">
+            <NeuralHeroScene className="min-h-[28rem]" />
+          </div>
+
+          <div className="relative z-10 flex items-center gap-3 text-sm text-slate-300">
+            <ShieldEllipsis className="size-4 text-cyan-300" />
+            Secure sign-in, premium experience, and confidence-aware forecasting.
+          </div>
         </div>
-        <p className="text-sm text-slate-400">Predict risk. Improve outcomes. Empower every student.</p>
-      </div>
-      <div className="flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <h1 className="text-2xl font-bold text-white">{title}</h1>
-          <p className="mt-1 text-sm text-slate-400">{subtitle}</p>
-          <div className="mt-6">{children}</div>
-        </Card>
+
+        <div className="flex items-center justify-center px-4 py-8">
+          <motion.div
+            initial={{ opacity: 0, x: 26 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, ease: 'easeOut' }}
+            className="w-full max-w-xl"
+          >
+            <Card className="overflow-hidden border-white/10 bg-[linear-gradient(180deg,rgba(8,15,34,0.92),rgba(8,15,34,0.72))] p-0">
+              <div className="border-b border-white/10 px-6 py-6">
+                <p className="text-[0.72rem] uppercase tracking-[0.34em] text-cyan-200/80">Authentication</p>
+                <h2 className="mt-3 text-3xl font-bold text-white">{title}</h2>
+                <p className="mt-2 text-sm text-slate-300">{subtitle}</p>
+              </div>
+              <div className="px-6 py-6">{children}</div>
+            </Card>
+          </motion.div>
+        </div>
       </div>
     </div>
   )
 }
 
+
 function LoginForm() {
   const navigate = useNavigate()
-  const form = useForm<Values>({ resolver: zodResolver(schema), defaultValues: { email: '', password: '' } })
+  const location = useLocation()
+  const { setAuthenticated } = useAppStore()
+  const redirectTo = typeof location.state?.from === 'string' ? location.state.from : '/dashboard'
+  const form = useForm<LoginValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { email: '', password: '' },
+  })
   const [tempToken, setTempToken] = useState('')
   const [code, setCode] = useState('')
+
+  async function finalizeLogin(accessToken: string, refreshToken: string) {
+    storeSessionTokens(accessToken, refreshToken)
+    const user = await fetchMe(accessToken)
+    setAuthenticated(user)
+    toast.success('Login successful')
+    navigate(redirectTo)
+  }
 
   const onSubmit = form.handleSubmit(async (values) => {
     try {
@@ -51,12 +119,12 @@ function LoginForm() {
         toast.info('2FA code required')
         return
       }
-      if (result.access_token && result.refresh_token) {
-        localStorage.setItem('access_token', result.access_token)
-        localStorage.setItem('refresh_token', result.refresh_token)
+
+      if (!result.access_token || !result.refresh_token) {
+        throw new Error('Missing session tokens')
       }
-      toast.success('Login successful')
-      navigate('/dashboard')
+
+      await finalizeLogin(result.access_token, result.refresh_token)
     } catch {
       toast.error('Login failed. Check your credentials.')
     }
@@ -65,70 +133,63 @@ function LoginForm() {
   const verifyCode = async () => {
     try {
       const result = await verify2FA(tempToken, code)
-      if (result.access_token && result.refresh_token) {
-        localStorage.setItem('access_token', result.access_token)
-        localStorage.setItem('refresh_token', result.refresh_token)
+      if (!result.access_token || !result.refresh_token) {
+        throw new Error('Missing session tokens')
       }
-      toast.success('2FA verification successful')
-      navigate('/dashboard')
+      await finalizeLogin(result.access_token, result.refresh_token)
     } catch {
       toast.error('Invalid 2FA code')
     }
   }
 
-  const handleSocialSignIn = async (provider: 'google' | 'github') => {
-    try {
-      const result = await socialLogin(provider)
-      if (result.requires_2fa && result.temp_token) {
-        setTempToken(result.temp_token)
-        toast.info('2FA code required')
-        return
-      }
-      if (result.access_token && result.refresh_token) {
-        localStorage.setItem('access_token', result.access_token)
-        localStorage.setItem('refresh_token', result.refresh_token)
-      }
-      toast.success(`Signed in with ${provider === 'google' ? 'Google' : 'GitHub'}`)
-      navigate('/dashboard')
-    } catch {
-      toast.error(`${provider === 'google' ? 'Google' : 'GitHub'} sign-in failed`)
-    }
-  }
-
   return (
-    <form className="space-y-3" onSubmit={onSubmit}>
-      <Input placeholder="Email" {...form.register('email')} />
-      {form.formState.errors.email && <p className="text-xs text-rose-300">{form.formState.errors.email.message}</p>}
-      <Input type="password" placeholder="Password" {...form.register('password')} />
-      {form.formState.errors.password && <p className="text-xs text-rose-300">{form.formState.errors.password.message}</p>}
-      <Button className="w-full">Login</Button>
-      <Button type="button" variant="outline" className="w-full" onClick={() => handleSocialSignIn('google')}>
-        Sign in with Google
+    <form className="space-y-4" onSubmit={onSubmit}>
+      <label className="block space-y-2">
+        <span className="text-xs uppercase tracking-[0.24em] text-slate-400">Email</span>
+        <Input placeholder="learner@campus.ai" {...form.register('email')} />
+        {form.formState.errors.email && (
+          <p className="text-xs text-rose-300">{form.formState.errors.email.message}</p>
+        )}
+      </label>
+
+      <label className="block space-y-2">
+        <span className="text-xs uppercase tracking-[0.24em] text-slate-400">Password</span>
+        <Input type="password" placeholder="Enter your password" {...form.register('password')} />
+        {form.formState.errors.password && (
+          <p className="text-xs text-rose-300">{form.formState.errors.password.message}</p>
+        )}
+      </label>
+
+      <Button className="w-full" size="lg">
+        Enter dashboard
+        <ArrowRight className="ml-2 size-4" />
       </Button>
-      <Button type="button" variant="outline" className="w-full" onClick={() => handleSocialSignIn('github')}>
-        Sign in with GitHub
-      </Button>
+
+      <div className="rounded-[1.35rem] border border-white/10 bg-white/5 p-4 text-sm text-slate-300">
+        Google and GitHub sign-in are hidden until the backend OAuth routes are configured. This avoids dead-end
+        auth buttons and keeps the login flow trustworthy.
+      </div>
+
       {tempToken && (
-        <div className="rounded-2xl border border-cyan-300/30 bg-cyan-400/10 p-3">
-          <p className="mb-2 text-xs text-cyan-200">Enter 2FA code from your authenticator app</p>
-          <div className="flex gap-2">
-            <Input placeholder="123456" value={code} onChange={(e) => setCode(e.target.value)} />
-            <Button type="button" onClick={verifyCode}>Verify</Button>
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-[1.5rem] border border-cyan-300/20 bg-cyan-400/10 p-4"
+        >
+          <p className="text-[0.72rem] uppercase tracking-[0.24em] text-cyan-100/80">2FA required</p>
+          <p className="mt-2 text-sm text-slate-200">Enter the 6-digit verification code from your authenticator app.</p>
+          <div className="mt-4 flex gap-2">
+            <Input placeholder="123456" value={code} onChange={(event) => setCode(event.target.value)} />
+            <Button type="button" onClick={verifyCode}>
+              Verify
+            </Button>
           </div>
-        </div>
+        </motion.div>
       )}
     </form>
   )
 }
 
-const signupSchema = z.object({
-  full_name: z.string().min(2),
-  email: z.string().email(),
-  password: z.string().min(8),
-  role: z.enum(['student', 'teacher', 'admin']),
-})
-
-type SignupValues = z.infer<typeof signupSchema>
 
 function SignupForm() {
   const navigate = useNavigate()
@@ -140,7 +201,7 @@ function SignupForm() {
   const onSubmit = form.handleSubmit(async (values) => {
     try {
       await signup(values)
-      toast.success('Account created successfully. Please login.')
+      toast.success('Account created successfully. Please log in.')
       navigate('/login')
     } catch {
       toast.error('Signup failed. Email may already be registered.')
@@ -148,43 +209,87 @@ function SignupForm() {
   })
 
   return (
-    <form className="space-y-3" onSubmit={onSubmit}>
-      <Input placeholder="Full name" {...form.register('full_name')} />
-      <Input placeholder="Email" {...form.register('email')} />
-      <Input type="password" placeholder="Password" {...form.register('password')} />
-      <select className="h-11 w-full rounded-2xl border border-white/20 bg-slate-900/60 px-3 text-sm" {...form.register('role')}>
-        <option value="student">Student</option>
-        <option value="teacher">Teacher</option>
-        <option value="admin">Admin / Institution</option>
-      </select>
-      <Button className="w-full">Create account</Button>
+    <form className="space-y-4" onSubmit={onSubmit}>
+      <label className="block space-y-2">
+        <span className="text-xs uppercase tracking-[0.24em] text-slate-400">Full name</span>
+        <Input placeholder="Aarav Rao" {...form.register('full_name')} />
+      </label>
+      <label className="block space-y-2">
+        <span className="text-xs uppercase tracking-[0.24em] text-slate-400">Email</span>
+        <Input placeholder="learner@campus.ai" {...form.register('email')} />
+      </label>
+      <label className="block space-y-2">
+        <span className="text-xs uppercase tracking-[0.24em] text-slate-400">Password</span>
+        <Input type="password" placeholder="Create a secure password" {...form.register('password')} />
+      </label>
+      <label className="block space-y-2">
+        <span className="text-xs uppercase tracking-[0.24em] text-slate-400">Role</span>
+        <select
+          className="flex h-12 w-full rounded-[1.15rem] border border-white/12 bg-[linear-gradient(180deg,rgba(2,6,23,0.88),rgba(15,23,42,0.75))] px-4 text-sm text-slate-100 focus-visible:border-cyan-300/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/30"
+          {...form.register('role')}
+        >
+          <option value="student">Student</option>
+          <option value="teacher">Teacher</option>
+        </select>
+      </label>
+      <Button className="w-full" size="lg">
+        Create account
+        <Sparkles className="ml-2 size-4" />
+      </Button>
     </form>
   )
 }
 
+
 export function LoginPage() {
   return (
-    <AuthLayout title="Welcome back" subtitle="Access your intelligence dashboard">
+    <AuthLayout
+      title="Welcome back"
+      subtitle="Access your cinematic AI workspace."
+      spotlight="Step into a premium product layer built for confidence-aware forecasting, intervention planning, and academic intelligence."
+    >
       <LoginForm />
-      <p className="mt-4 text-sm text-slate-400">No account? <Link to="/signup" className="text-cyan-300">Sign up</Link></p>
-      <p className="mt-2 text-sm text-slate-400"><Link to="/forgot-password" className="text-cyan-300">Forgot password?</Link></p>
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-400">
+        <p>
+          No account?{' '}
+          <Link to="/signup" className="text-cyan-300">
+            Sign up
+          </Link>
+        </p>
+        <Link to="/forgot-password" className="text-cyan-300">
+          Forgot password?
+        </Link>
+      </div>
     </AuthLayout>
   )
 }
 
+
 export function SignupPage() {
   return (
-    <AuthLayout title="Create account" subtitle="Start your AI learning journey">
+    <AuthLayout
+      title="Create your AI account"
+      subtitle="Launch the academic performance cockpit in minutes."
+      spotlight="Bring students and teachers into one immersive product with layered analytics, prediction workflows, and intervention intelligence."
+    >
       <SignupForm />
-      <p className="mt-4 text-sm text-slate-400">Already registered? <Link to="/login" className="text-cyan-300">Login</Link></p>
+      <div className="mt-6 text-sm text-slate-400">
+        Already registered?{' '}
+        <Link to="/login" className="text-cyan-300">
+          Login
+        </Link>
+      </div>
     </AuthLayout>
   )
 }
+
 
 export function ForgotPasswordPage() {
   const [params] = useSearchParams()
   const resetToken = params.get('token')
-  const form = useForm<{ email: string; newPassword: string }>({ defaultValues: { email: '', newPassword: '' } })
+  const form = useForm<{ email: string; newPassword: string }>({
+    defaultValues: { email: '', newPassword: '' },
+  })
 
   const onSubmit = form.handleSubmit(async (values) => {
     try {
@@ -201,21 +306,32 @@ export function ForgotPasswordPage() {
   })
 
   return (
-    <AuthLayout title="Reset password" subtitle="We will send a recovery link">
-      <form className="space-y-3" onSubmit={onSubmit}>
+    <AuthLayout
+      title={resetToken ? 'Choose a new password' : 'Reset password'}
+      subtitle="We will help you recover access securely."
+      spotlight="Security, elegant UX, and speed matter just as much on utility flows as they do on flagship dashboards."
+    >
+      <form className="space-y-4" onSubmit={onSubmit}>
         {resetToken ? (
-          <>
-            <Input type="password" placeholder="New password" {...form.register('newPassword')} />
-            <Button className="w-full">Reset password</Button>
-          </>
+          <label className="block space-y-2">
+            <span className="text-xs uppercase tracking-[0.24em] text-slate-400">New password</span>
+            <Input type="password" placeholder="Create a new password" {...form.register('newPassword')} />
+          </label>
         ) : (
-          <>
-            <Input placeholder="Email" {...form.register('email')} />
-            <Button className="w-full">Send reset link</Button>
-          </>
+          <label className="block space-y-2">
+            <span className="text-xs uppercase tracking-[0.24em] text-slate-400">Email</span>
+            <Input placeholder="learner@campus.ai" {...form.register('email')} />
+          </label>
         )}
+        <Button className="w-full" size="lg">
+          {resetToken ? 'Reset password' : 'Send reset link'}
+        </Button>
       </form>
-      <p className="mt-4 text-sm text-slate-400"><Link to="/login" className="text-cyan-300">Back to login</Link></p>
+      <div className="mt-6 text-sm text-slate-400">
+        <Link to="/login" className="text-cyan-300">
+          Back to login
+        </Link>
+      </div>
     </AuthLayout>
   )
 }

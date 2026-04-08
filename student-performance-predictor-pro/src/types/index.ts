@@ -1,4 +1,14 @@
 export type RiskBand = 'Low' | 'Moderate' | 'High'
+export type ThemeMode = 'dark' | 'light'
+export type UserRole = 'student' | 'teacher' | 'admin'
+
+export type AuthUser = {
+  id: string
+  full_name: string
+  email: string
+  role: UserRole
+  two_fa_enabled: boolean
+}
 
 export type AssessmentPayload = {
   study_hours_sum: number
@@ -35,10 +45,33 @@ export type PredictionResponse = {
   explanation: string[]
 }
 
+export type UncertaintyResponse = {
+  confidence: number
+  uncertainty: number
+}
+
+export type PredictionHistoryItem = PredictionResponse & {
+  id: string
+  studentName: string
+  generatedAt: string
+  confidence: number
+}
+
 export type RecommendationItem = {
   id: string
   title: string
   description: string
   impact: 'High impact' | 'Quick win' | 'Long-term'
   expectedReduction: number
+}
+
+export type ComparisonStudent = {
+  id: string
+  name: string
+  track: string
+  risk: number
+  attendance: number
+  sleep: number
+  consistency: number
+  momentum: string
 }

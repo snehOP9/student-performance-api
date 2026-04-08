@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import type { User, Assessment, StudentInput, PredictionResult } from '../types';
 
+type StudentInputValue = StudentInput[keyof StudentInput];
+
 interface AppStore {
   // Auth
   user: User | null;
@@ -23,7 +25,7 @@ interface AppStore {
   setError: (error: string | null) => void;
   
   setCurrentAssessment: (assessment: Partial<StudentInput> | null) => void;
-  updateAssessmentField: (field: keyof StudentInput, value: any) => void;
+  updateAssessmentField: (field: keyof StudentInput, value: StudentInputValue) => void;
   clearAssessment: () => void;
   
   setLastPrediction: (prediction: PredictionResult | null) => void;

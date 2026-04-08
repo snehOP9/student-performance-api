@@ -11,6 +11,7 @@ from .models import PasswordResetToken, RefreshToken, User
 from .security import (
     create_access_token,
     create_refresh_token,
+    create_2fa_setup_token,
     create_temp_2fa_token,
     decode_token,
     generate_2fa_secret,
@@ -22,11 +23,14 @@ from .security import (
 )
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/auth/login')
+ALLOWED_ROLES = {'student', 'teacher', 'admin'}
+PUBLIC_SIGNUP_ROLES = {'student', 'teacher'}
 
 
 def _issue_tokens(db: Session, user: User) -> dict:
-    access_token = create_access_token(user.id, user.role)
-    refresh_token, jti, expires_at = create_refresh_token(user.id)
+    session_version = int(user.session_version or 0)
+    access_token = create_access_token(user.id, user.role, session_version)
+    refresh_token, jti, expires_at = create_refresh_token(user.id, session_version)
     token_row = RefreshToken(id=jti, user_id=user.id, expires_at=expires_at, revoked=False)
     db.add(token_row)
     db.commit()
@@ -37,7 +41,34 @@ def _issue_tokens(db: Session, user: User) -> dict:
     }
 
 
-def create_user(db: Session, full_name: str, email: str, password: str, role: str) -> User:
+def _normalize_role(role: str) -> str:
+    normalized = role.strip().lower()
+    if normalized not in ALLOWED_ROLES:
+        raise HTTPException(status_code=400, detail='Invalid role')
+    return normalized
+
+
+def invalidate_user_sessions(db: Session, user: User) -> None:
+    db.query(RefreshToken).filter(RefreshToken.user_id == user.id, RefreshToken.revoked == False).update(
+        {RefreshToken.revoked: True},
+        synchronize_session=False,
+    )
+    user.session_version = int(user.session_version or 0) + 1
+    db.add(user)
+
+
+def create_user(
+    db: Session,
+    full_name: str,
+    email: str,
+    password: str,
+    role: str,
+    allow_privileged: bool = False,
+) -> User:
+    normalized_role = _normalize_role(role)
+    if normalized_role not in PUBLIC_SIGNUP_ROLES and not allow_privileged:
+        raise HTTPException(status_code=403, detail='Public signup cannot create privileged accounts')
+
     existing = db.query(User).filter(User.email == email.lower()).first()
     if existing:
         raise HTTPException(status_code=409, detail='Email already registered')
@@ -47,7 +78,8 @@ def create_user(db: Session, full_name: str, email: str, password: str, role: st
         full_name=full_name,
         email=email.lower(),
         password_hash=hash_password(password),
-        role=role,
+        role=normalized_role,
+        session_version=0,
         is_active=True,
         is_email_verified=False,
         two_fa_enabled=False,
@@ -80,7 +112,10 @@ def login_user(db: Session, email: str, password: str) -> dict:
 
 
 def verify_2fa_and_issue(db: Session, temp_token: str, code: str) -> dict:
-    payload = decode_token(temp_token)
+    try:
+        payload = decode_token(temp_token)
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail='Invalid temporary token') from exc
     if payload.get('type') != '2fa-temp':
         raise HTTPException(status_code=401, detail='Invalid temporary token')
 
@@ -99,7 +134,10 @@ def verify_2fa_and_issue(db: Session, temp_token: str, code: str) -> dict:
 
 
 def refresh_access_token(db: Session, refresh_token: str) -> dict:
-    payload = decode_token(refresh_token)
+    try:
+        payload = decode_token(refresh_token)
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail='Invalid refresh token') from exc
     if payload.get('type') != 'refresh':
         raise HTTPException(status_code=401, detail='Invalid refresh token type')
 
@@ -113,6 +151,11 @@ def refresh_access_token(db: Session, refresh_token: str) -> dict:
     user = db.query(User).filter(User.id == sub).first()
     if not user or not user.is_active:
         raise HTTPException(status_code=401, detail='User not available')
+    if payload.get('sv') != int(user.session_version or 0):
+        token_row.revoked = True
+        db.add(token_row)
+        db.commit()
+        raise HTTPException(status_code=401, detail='Refresh token is no longer valid')
 
     token_row.revoked = True
     db.add(token_row)
@@ -179,6 +222,7 @@ def reset_password(db: Session, token: str, new_password: str) -> None:
         raise HTTPException(status_code=404, detail='User not found')
 
     user.password_hash = hash_password(new_password)
+    invalidate_user_sessions(db, user)
     row.used = True
     db.add(user)
     db.add(row)
@@ -186,13 +230,18 @@ def reset_password(db: Session, token: str, new_password: str) -> None:
 
 
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
-    payload = decode_token(token)
+    try:
+        payload = decode_token(token)
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail='Invalid access token') from exc
     if payload.get('type') != 'access':
         raise HTTPException(status_code=401, detail='Invalid token type')
 
     user = db.query(User).filter(User.id == payload.get('sub')).first()
-    if not user:
-        raise HTTPException(status_code=404, detail='User not found')
+    if not user or not user.is_active:
+        raise HTTPException(status_code=401, detail='User is not active')
+    if payload.get('sv') != int(user.session_version or 0):
+        raise HTTPException(status_code=401, detail='Session is no longer valid')
     return user
 
 
@@ -208,10 +257,24 @@ def require_roles(*roles: str):
 def setup_2fa(user: User) -> dict:
     secret = generate_2fa_secret()
     uri = provisioning_uri(secret, user.email)
-    return {'secret': secret, 'otpauth_url': uri}
+    return {
+        'secret': secret,
+        'otpauth_url': uri,
+        'setup_token': create_2fa_setup_token(user.id, secret),
+    }
 
 
-def enable_2fa(db: Session, user: User, secret: str, code: str) -> None:
+def enable_2fa(db: Session, user: User, setup_token: str, code: str) -> None:
+    try:
+        payload = decode_token(setup_token)
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail='Invalid 2FA setup token') from exc
+    if payload.get('type') != '2fa-setup' or payload.get('sub') != user.id:
+        raise HTTPException(status_code=401, detail='Invalid 2FA setup token')
+
+    secret = payload.get('secret')
+    if not secret:
+        raise HTTPException(status_code=400, detail='Missing 2FA secret')
     if not verify_totp(secret, code):
         raise HTTPException(status_code=400, detail='Invalid authenticator code')
 
