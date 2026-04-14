@@ -2,10 +2,10 @@
   "name": "sic-project-workspace",
   "private": true,
   "scripts": {
-    "dev": "npm --prefix \"d:\\SIC_Project\\student-performance-predictor-pro\" run dev -- --port 3000",
-    "build": "npm --prefix \"d:\\SIC_Project\\student-performance-predictor-pro\" run build",
-    "dev:student-ui": "npm --prefix \"d:\\SIC_Project\\student-ui\" run dev -- -p 3001",
-    "dev:spp-pro": "npm --prefix \"d:\\SIC_Project\\spp-pro\" run dev -- --port 3002"
+    "dev": "npm --prefix student-performance-predictor-pro run dev -- --port 3000",
+    "build": "npm --prefix student-performance-predictor-pro run build",
+    "dev:student-ui": "npm --prefix student-ui run dev -- -p 3001",
+    "dev:spp-pro": "npm --prefix spp-pro run dev -- --port 3002"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

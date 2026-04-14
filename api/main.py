@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from urllib.parse import urlparse
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -135,11 +136,21 @@ API_ENDPOINTS = [
 
 def parse_frontend_origins() -> list[str]:
     raw = os.getenv('FRONTEND_ORIGINS', '').strip()
+    frontend_base_url = os.getenv('FRONTEND_BASE_URL', '').strip()
+
+    merged_origins = list(DEFAULT_FRONTEND_ORIGINS)
+    if frontend_base_url:
+        parsed_frontend = urlparse(frontend_base_url)
+        if parsed_frontend.scheme and parsed_frontend.netloc:
+            merged_origins.append(f'{parsed_frontend.scheme}://{parsed_frontend.netloc}')
+
     if not raw:
-        return DEFAULT_FRONTEND_ORIGINS
+        return list(dict.fromkeys(merged_origins))
     if raw == '*':
         return ['*']
-    return [origin.strip() for origin in raw.split(',') if origin.strip()]
+
+    merged_origins.extend(origin.strip() for origin in raw.split(',') if origin.strip())
+    return list(dict.fromkeys(merged_origins))
 
 
 ALLOWED_ORIGINS = parse_frontend_origins()

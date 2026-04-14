@@ -7,8 +7,51 @@ import type {
   RiskBand,
 } from '../types'
 
+type ApiErrorPayload =
+  | {
+      detail?: string
+      message?: string
+      error?: string
+    }
+  | string
+
+type PredictionApiResponse = {
+  explanation?: unknown
+  risk_percentage?: unknown
+  risk_band?: unknown
+}
+
+type RecommendationApiResponse = {
+  id?: unknown
+  feature?: unknown
+  title?: unknown
+  description?: unknown
+  impact?: unknown
+  expectedReduction?: unknown
+  risk_reduction?: unknown
+}
+
+function resolveApiBaseUrl() {
+  const configuredBaseUrl = import.meta.env.VITE_API_URL?.trim()
+  if (configuredBaseUrl) {
+    return configuredBaseUrl.replace(/\/+$/, '')
+  }
+
+  if (typeof window !== 'undefined') {
+    const { hostname } = window.location
+    const isLocalHost =
+      hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0'
+
+    if (!isLocalHost) {
+      return 'https://student-performance-api-7lah.onrender.com'
+    }
+  }
+
+  return 'http://127.0.0.1:8000'
+}
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000',
+  baseURL: resolveApiBaseUrl(),
   timeout: 8000,
 })
 
@@ -44,7 +87,26 @@ function mapRiskBand(value: unknown): RiskBand {
   return 'Moderate'
 }
 
-function mapPrediction(data: any): PredictionResponse {
+export function getApiErrorMessage(error: unknown, fallback: string) {
+  if (!axios.isAxiosError(error)) {
+    return fallback
+  }
+
+  const payload = error.response?.data as ApiErrorPayload | undefined
+  if (typeof payload === 'string' && payload.trim()) {
+    return payload
+  }
+  if (payload && typeof payload === 'object') {
+    const message = payload.detail ?? payload.message ?? payload.error
+    if (typeof message === 'string' && message.trim()) {
+      return message
+    }
+  }
+
+  return fallback
+}
+
+function mapPrediction(data: PredictionApiResponse): PredictionResponse {
   const explanation = Array.isArray(data?.explanation)
     ? data.explanation.map((item: unknown) => String(item))
     : []
@@ -122,9 +184,11 @@ export async function getUncertainty(payload: AssessmentPayload): Promise<{ conf
 
 export async function getRecommendations(payload: AssessmentPayload): Promise<RecommendationItem[]> {
   const { data } = await api.post('/recommend', payload)
-  const recommendations = Array.isArray(data?.recommendations) ? data.recommendations : []
+  const recommendations: RecommendationApiResponse[] = Array.isArray(data?.recommendations)
+    ? data.recommendations
+    : []
 
-  return recommendations.map((item: any, index: number) => ({
+  return recommendations.map((item, index: number) => ({
     id: String(item?.id ?? item?.feature ?? `rec-${index}`),
     title: String(item?.title ?? `Improve ${String(item?.feature ?? 'signal').replace(/_/g, ' ')}`),
     description: String(item?.description ?? 'Personalized action derived from the current model drivers.'),

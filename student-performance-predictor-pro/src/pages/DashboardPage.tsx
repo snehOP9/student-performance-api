@@ -38,7 +38,13 @@ export function DashboardPage() {
       { title: 'Sleep quality', value: `${assessmentDraft.sleep_mean.toFixed(1)}h`, delta: 'Latest assessment snapshot', icon: AlarmClockCheck },
       { title: 'Resource engagement', value: `${assessmentDraft.resources_sum}`, delta: 'Resources opened in the latest draft', icon: MousePointerClick },
     ],
-    [assessmentDraft.attendance_mean, assessmentDraft.resources_sum, assessmentDraft.sleep_mean, currentPrediction.risk_probability],
+    [
+      assessmentDraft.attendance_mean,
+      assessmentDraft.consistency_score_mean,
+      assessmentDraft.resources_sum,
+      assessmentDraft.sleep_mean,
+      currentPrediction.risk_probability,
+    ],
   )
 
   return (

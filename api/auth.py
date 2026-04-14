@@ -199,7 +199,7 @@ def request_password_reset(db: Session, email: str) -> None:
     db.add(reset_row)
     db.commit()
 
-    frontend_url = os.getenv('FRONTEND_BASE_URL', 'http://localhost:5173')
+    frontend_url = os.getenv('FRONTEND_BASE_URL', 'http://localhost:3000')
     reset_link = f"{frontend_url}/forgot-password?token={plain_token}"
     try:
         send_password_reset_email(user.email, reset_link)

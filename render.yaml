@@ -6,14 +6,16 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn api.main:app --host 0.0.0.0 --port $PORT
     autoDeploy: true
-
-  - type: web
-    name: sri-center-ui
-    env: python
-    plan: free
-    buildCommand: pip install -r requirements.txt
-    startCommand: streamlit run app/main.py --server.address 0.0.0.0 --server.port $PORT
-    autoDeploy: true
     envVars:
-      - key: API_BASE
-        value: https://student-performance-api.onrender.com
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET_KEY
+        sync: false
+      - key: FRONTEND_ORIGINS
+        sync: false
+      - key: FRONTEND_BASE_URL
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: MAIL_FROM
+        sync: false

@@ -1,13 +1,18 @@
+import base64
 import hashlib
+import hmac
 import os
 import secrets
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
+
+import bcrypt
 import pyotp
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 
-pwd_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
+PBKDF2_ALGORITHM = 'sha256'
+PBKDF2_ITERATIONS = 600_000
+PBKDF2_PREFIX = 'pbkdf2_sha256'
 
 def _load_secret_key() -> str:
     secret = os.getenv('JWT_SECRET_KEY', '').strip()
@@ -26,12 +31,53 @@ TEMP_2FA_TOKEN_EXPIRE_MINUTES = int(os.getenv('TEMP_2FA_TOKEN_EXPIRE_MINUTES', '
 SETUP_2FA_TOKEN_EXPIRE_MINUTES = int(os.getenv('SETUP_2FA_TOKEN_EXPIRE_MINUTES', '10'))
 
 
+def _pbkdf2_hash(password: str, salt: bytes | None = None) -> str:
+    salt_bytes = salt or secrets.token_bytes(16)
+    derived_key = hashlib.pbkdf2_hmac(
+        PBKDF2_ALGORITHM,
+        password.encode('utf-8'),
+        salt_bytes,
+        PBKDF2_ITERATIONS,
+    )
+    encoded_salt = base64.urlsafe_b64encode(salt_bytes).decode('utf-8')
+    encoded_hash = base64.urlsafe_b64encode(derived_key).decode('utf-8')
+    return f'{PBKDF2_PREFIX}${PBKDF2_ITERATIONS}${encoded_salt}${encoded_hash}'
+
+
+def _verify_pbkdf2(password: str, hashed_password: str) -> bool:
+    try:
+        _, iterations, encoded_salt, encoded_hash = hashed_password.split('$', 3)
+        salt = base64.urlsafe_b64decode(encoded_salt.encode('utf-8'))
+        expected = base64.urlsafe_b64decode(encoded_hash.encode('utf-8'))
+    except (ValueError, TypeError):
+        return False
+
+    derived_key = hashlib.pbkdf2_hmac(
+        PBKDF2_ALGORITHM,
+        password.encode('utf-8'),
+        salt,
+        int(iterations),
+    )
+    return hmac.compare_digest(derived_key, expected)
+
+
+def _verify_legacy_bcrypt(password: str, hashed_password: str) -> bool:
+    try:
+        return bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8'))
+    except ValueError:
+        return False
+
+
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    return _pbkdf2_hash(password)
 
 
 def verify_password(password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(password, hashed_password)
+    if hashed_password.startswith(f'{PBKDF2_PREFIX}$'):
+        return _verify_pbkdf2(password, hashed_password)
+    if hashed_password.startswith('$2'):
+        return _verify_legacy_bcrypt(password, hashed_password)
+    return False
 
 
 def create_access_token(subject: str, role: str, session_version: int) -> str:

@@ -4,6 +4,8 @@ student-ui/node_modules/
 student-ui/.next/
 .env
 .env.*
+!.env.example
+!student-performance-predictor-pro/.env.local.example
 .venv/
 .vercel/
 __pycache__/

@@ -11,13 +11,21 @@ import { NeuralHeroScene } from '../components/three/NeuralHeroScene'
 import { Button } from '../components/ui/button'
 import { Card } from '../components/ui/card'
 import { Input } from '../components/ui/input'
-import { fetchMe, forgotPassword, login, resetPassword, signup, verify2FA } from '../lib/api'
+import {
+  fetchMe,
+  forgotPassword,
+  getApiErrorMessage,
+  login,
+  resetPassword,
+  signup,
+  verify2FA,
+} from '../lib/api'
 import { storeSessionTokens } from '../lib/session'
 import { useAppStore } from '../store/appStore'
 
 const loginSchema = z.object({
   email: z.string().email('Valid email required'),
-  password: z.string().min(6, 'Minimum 6 characters'),
+  password: z.string().min(8, 'Minimum 8 characters'),
 })
 
 type LoginValues = z.infer<typeof loginSchema>
@@ -125,8 +133,8 @@ function LoginForm() {
       }
 
       await finalizeLogin(result.access_token, result.refresh_token)
-    } catch {
-      toast.error('Login failed. Check your credentials.')
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Login failed. Check your credentials.'))
     }
   })
 
@@ -137,8 +145,8 @@ function LoginForm() {
         throw new Error('Missing session tokens')
       }
       await finalizeLogin(result.access_token, result.refresh_token)
-    } catch {
-      toast.error('Invalid 2FA code')
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Invalid 2FA code'))
     }
   }
 
@@ -160,7 +168,7 @@ function LoginForm() {
         )}
       </label>
 
-      <Button className="w-full" size="lg">
+      <Button className="w-full" size="lg" disabled={form.formState.isSubmitting}>
         Enter dashboard
         <ArrowRight className="ml-2 size-4" />
       </Button>
@@ -203,8 +211,8 @@ function SignupForm() {
       await signup(values)
       toast.success('Account created successfully. Please log in.')
       navigate('/login')
-    } catch {
-      toast.error('Signup failed. Email may already be registered.')
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Signup failed. Email may already be registered.'))
     }
   })
 
@@ -213,14 +221,23 @@ function SignupForm() {
       <label className="block space-y-2">
         <span className="text-xs uppercase tracking-[0.24em] text-slate-400">Full name</span>
         <Input placeholder="Aarav Rao" {...form.register('full_name')} />
+        {form.formState.errors.full_name && (
+          <p className="text-xs text-rose-300">{form.formState.errors.full_name.message}</p>
+        )}
       </label>
       <label className="block space-y-2">
         <span className="text-xs uppercase tracking-[0.24em] text-slate-400">Email</span>
         <Input placeholder="learner@campus.ai" {...form.register('email')} />
+        {form.formState.errors.email && (
+          <p className="text-xs text-rose-300">{form.formState.errors.email.message}</p>
+        )}
       </label>
       <label className="block space-y-2">
         <span className="text-xs uppercase tracking-[0.24em] text-slate-400">Password</span>
         <Input type="password" placeholder="Create a secure password" {...form.register('password')} />
+        {form.formState.errors.password && (
+          <p className="text-xs text-rose-300">{form.formState.errors.password.message}</p>
+        )}
       </label>
       <label className="block space-y-2">
         <span className="text-xs uppercase tracking-[0.24em] text-slate-400">Role</span>
@@ -232,7 +249,7 @@ function SignupForm() {
           <option value="teacher">Teacher</option>
         </select>
       </label>
-      <Button className="w-full" size="lg">
+      <Button className="w-full" size="lg" disabled={form.formState.isSubmitting}>
         Create account
         <Sparkles className="ml-2 size-4" />
       </Button>
@@ -300,8 +317,8 @@ export function ForgotPasswordPage() {
         await forgotPassword(values.email)
         toast.success('Reset link sent if email exists')
       }
-    } catch {
-      toast.error('Could not process request')
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Could not process request'))
     }
   })
 
@@ -323,7 +340,7 @@ export function ForgotPasswordPage() {
             <Input placeholder="learner@campus.ai" {...form.register('email')} />
           </label>
         )}
-        <Button className="w-full" size="lg">
+        <Button className="w-full" size="lg" disabled={form.formState.isSubmitting}>
           {resetToken ? 'Reset password' : 'Send reset link'}
         </Button>
       </form>
