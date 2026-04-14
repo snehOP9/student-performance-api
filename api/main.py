@@ -8,7 +8,6 @@ import joblib
 import numpy as np
 import pandas as pd
 from pydantic import BaseModel, Field
-import shap
 from sqlalchemy.orm import Session
 
 from .auth import (
@@ -170,24 +169,35 @@ FEATURE_COLUMNS = []
 qhat = None
 explainer = None
 cohort_source = None
+artifact_load_error: str | None = None
 
 
 @app.on_event('startup')
 def load_artifacts() -> None:
-    global model, FEATURE_COLUMNS, qhat, explainer
+    global artifact_load_error, model, FEATURE_COLUMNS, qhat, explainer
     init_db()
     try:
+        import shap
+
         model = joblib.load(MODEL_PATH)
         FEATURE_COLUMNS = joblib.load(FEATURES_PATH)
         qhat = float(joblib.load(QHAT_PATH))
         explainer = shap.TreeExplainer(model)
-    except FileNotFoundError as exc:
-        raise RuntimeError(f'Missing model artifact: {exc.filename}') from exc
+        artifact_load_error = None
+    except Exception as exc:  # pragma: no cover - startup resilience for managed deploys
+        model = None
+        FEATURE_COLUMNS = []
+        qhat = None
+        explainer = None
+        artifact_load_error = str(exc)
 
 
 def assert_model_ready() -> None:
     if model is None or qhat is None or not FEATURE_COLUMNS:
-        raise HTTPException(status_code=503, detail='Model artifacts are not loaded')
+        detail = 'Model artifacts are not loaded'
+        if artifact_load_error:
+            detail = f'{detail}: {artifact_load_error}'
+        raise HTTPException(status_code=503, detail=detail)
 
 
 def clamp(value: float, lower: float, upper: float) -> float:

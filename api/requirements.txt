@@ -8,6 +8,7 @@ lightgbm==4.5.0
 scikit-learn==1.5.1
 sqlalchemy==2.0.37
 psycopg[binary]==3.2.3
+python-dotenv==1.0.1
 python-jose==3.3.0
 bcrypt==5.0.0
 pyotp==2.9.0

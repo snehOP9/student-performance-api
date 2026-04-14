@@ -43,7 +43,7 @@ function resolveApiBaseUrl() {
       hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0'
 
     if (!isLocalHost) {
-      return 'https://student-performance-api-7lah.onrender.com'
+      return 'https://student-performance-predictor-pro-a.vercel.app'
     }
   }
 
