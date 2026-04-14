@@ -170,26 +170,48 @@ qhat = None
 explainer = None
 cohort_source = None
 artifact_load_error: str | None = None
+explainer_load_error: str | None = None
+model_backend = 'unloaded'
 
 
 @app.on_event('startup')
 def load_artifacts() -> None:
-    global artifact_load_error, model, FEATURE_COLUMNS, qhat, explainer
+    global artifact_load_error, explainer_load_error, model_backend, model, FEATURE_COLUMNS, qhat, explainer
     init_db()
     try:
-        import shap
-
-        model = joblib.load(MODEL_PATH)
         FEATURE_COLUMNS = joblib.load(FEATURES_PATH)
         qhat = float(joblib.load(QHAT_PATH))
-        explainer = shap.TreeExplainer(model)
         artifact_load_error = None
+        explainer_load_error = None
+
+        try:
+            model = joblib.load(MODEL_PATH)
+            model_backend = 'lightgbm'
+            try:
+                import shap
+
+                explainer = shap.TreeExplainer(model)
+            except Exception as exc:  # pragma: no cover - optional explainability dependency
+                explainer = None
+                explainer_load_error = str(exc)
+        except Exception as model_exc:  # pragma: no cover - managed deploy fallback
+            from .pure_model import GeneratedRiskModel
+
+            model = GeneratedRiskModel()
+            model_backend = 'generated'
+            explainer = None
+            explainer_load_error = (
+                'Using generated predictor without SHAP explainability: '
+                f'{model_exc}'
+            )
     except Exception as exc:  # pragma: no cover - startup resilience for managed deploys
         model = None
         FEATURE_COLUMNS = []
         qhat = None
         explainer = None
         artifact_load_error = str(exc)
+        explainer_load_error = None
+        model_backend = 'unloaded'
 
 
 def assert_model_ready() -> None:
@@ -197,6 +219,15 @@ def assert_model_ready() -> None:
         detail = 'Model artifacts are not loaded'
         if artifact_load_error:
             detail = f'{detail}: {artifact_load_error}'
+        raise HTTPException(status_code=503, detail=detail)
+
+
+def assert_explainer_ready() -> None:
+    assert_model_ready()
+    if explainer is None:
+        detail = 'Feature explainability is temporarily unavailable'
+        if explainer_load_error:
+            detail = f'{detail}: {explainer_load_error}'
         raise HTTPException(status_code=503, detail=detail)
 
 
@@ -342,6 +373,7 @@ def classify_risk(probability: float) -> str:
 
 
 def get_expected_value() -> float:
+    assert_explainer_ready()
     expected_value = explainer.expected_value
     if isinstance(expected_value, list):
         expected_value = expected_value[-1]
@@ -351,6 +383,7 @@ def get_expected_value() -> float:
 
 
 def get_shap_values(X: pd.DataFrame) -> np.ndarray:
+    assert_explainer_ready()
     values = explainer.shap_values(X)
     if isinstance(values, list):
         values = values[-1]
@@ -386,6 +419,34 @@ def build_top_features(X: pd.DataFrame, limit: int = 5) -> list[dict[str, float 
     return top_features
 
 
+def build_fallback_top_features(X: pd.DataFrame, limit: int = 5) -> list[dict[str, float | str]]:
+    row = X.iloc[0]
+    importance = getattr(model, 'feature_importances_', None)
+    if importance is None:
+        importance = np.ones(len(X.columns), dtype=float)
+
+    importance = np.asarray(importance, dtype=float)
+    top_indices = np.argsort(importance)[::-1][:limit]
+    top_features: list[dict[str, float | str]] = []
+
+    for index in top_indices:
+        feature = X.columns[index]
+        raw_value = float(row.iloc[index])
+        top_features.append(
+            {
+                'feature': feature,
+                'label': format_feature_name(feature).title(),
+                'value': raw_value,
+                'display_value': format_feature_value(feature, raw_value),
+                'shap_value': 0.0,
+                'direction': 'context',
+                'importance_gain': float(importance[index]),
+            }
+        )
+
+    return top_features
+
+
 def build_explanation_lines(top_features: list[dict[str, float | str]]) -> list[str]:
     if not top_features:
         return ['Risk drivers are not available for the current prediction.']
@@ -402,11 +463,38 @@ def build_explanation_lines(top_features: list[dict[str, float | str]]) -> list[
     return lines
 
 
+def build_fallback_explanation_lines(
+    probability: float,
+    top_features: list[dict[str, float | str]],
+) -> list[str]:
+    risk_band = classify_risk(probability)
+    summary = f'The model forecasts a {risk_band.lower()} risk profile at {probability * 100:.1f}%.'
+
+    if not top_features:
+        return [summary, 'Detailed driver explanations are temporarily unavailable in this deployment.']
+
+    lead_features = ', '.join(
+        f"{feature['label']} ({feature['display_value']})" for feature in top_features[:3]
+    )
+    return [
+        summary,
+        f'Key signals used in this forecast include {lead_features}.',
+        'Detailed SHAP explanations are temporarily unavailable in this deployment.',
+    ]
+
+
 def build_prediction_payload(student: StudentInput) -> dict[str, object]:
     X = to_model_df(student)
     probability = predict_probability_from_df(X)
-    top_features = build_top_features(X)
-    explanation = build_explanation_lines(top_features)
+    if explainer is not None:
+        top_features = build_top_features(X)
+        explanation = build_explanation_lines(top_features)
+        base_value: float | None = round(get_expected_value(), 6)
+    else:
+        top_features = build_fallback_top_features(X)
+        explanation = build_fallback_explanation_lines(probability, top_features)
+        base_value = None
+
     return {
         'risk_probability': round(probability, 4),
         'risk_percentage': round(probability * 100, 1),
@@ -414,7 +502,8 @@ def build_prediction_payload(student: StudentInput) -> dict[str, object]:
         'explanation': explanation,
         'explanation_summary': explanation[0],
         'top_features': top_features,
-        'base_value': round(get_expected_value(), 6),
+        'base_value': base_value,
+        'explainer_available': explainer is not None,
     }
 
 
@@ -509,6 +598,7 @@ def require_feature(feature: str) -> None:
 
 
 def get_interaction_values(X: pd.DataFrame) -> np.ndarray:
+    assert_explainer_ready()
     interaction_values = explainer.shap_interaction_values(X)
     if isinstance(interaction_values, list):
         interaction_values = interaction_values[-1]
@@ -588,6 +678,8 @@ def health():
         'status': 'ok',
         'model_loaded': model is not None,
         'features_loaded': bool(FEATURE_COLUMNS),
+        'explainer_loaded': explainer is not None,
+        'model_backend': model_backend,
     }
 
 
@@ -708,12 +800,13 @@ def explain(student: StudentInput):
         'base_value': prediction['base_value'],
         'top_features': prediction['top_features'],
         'explanation': prediction['explanation'],
+        'explainer_available': prediction['explainer_available'],
     }
 
 
 @app.post('/interactions')
 def interactions(student: StudentInput):
-    assert_model_ready()
+    assert_explainer_ready()
     X = to_model_df(student)
     interaction_values = get_interaction_values(X)[0]
     pairs: list[dict[str, object]] = []
@@ -835,7 +928,7 @@ def predict_batch(request: BatchPredictRequest):
 
 @app.post('/compare')
 def compare(request: CompareRequest):
-    assert_model_ready()
+    assert_explainer_ready()
     X_a = to_model_df(request.student_a)
     X_b = to_model_df(request.student_b)
     risk_a = predict_probability_from_df(X_a)
@@ -901,9 +994,11 @@ def model_info():
     feature_count = int(getattr(model, 'n_features_in_', len(FEATURE_COLUMNS)))
     return {
         'model_type': type(model).__name__,
+        'model_backend': model_backend,
         'n_estimators': estimator_count,
         'n_features': feature_count,
         'conformal_qhat': round(float(qhat), 6),
+        'explainer_loaded': explainer is not None,
         'endpoints': API_ENDPOINTS,
     }
 
