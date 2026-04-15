@@ -5,7 +5,6 @@ import os
 import secrets
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
-
 import bcrypt
 import pyotp
 from jose import JWTError, jwt
@@ -51,7 +50,6 @@ def _verify_pbkdf2(password: str, hashed_password: str) -> bool:
         expected = base64.urlsafe_b64decode(encoded_hash.encode('utf-8'))
     except (ValueError, TypeError):
         return False
-
     derived_key = hashlib.pbkdf2_hmac(
         PBKDF2_ALGORITHM,
         password.encode('utf-8'),

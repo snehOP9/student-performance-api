@@ -12,23 +12,42 @@ const analyticsPalette = ['#38bdf8', '#7dd3fc', '#c084fc', '#22d3ee', '#818cf8']
 
 function Pillars({ values }: AnalyticsPillarsSceneProps) {
   const groupRef = useRef<Group>(null)
+  const count = values.length
+  const spacing = useMemo(() => {
+    if (count <= 1) return 0
+    // Keep all pillars visible even with 7+ points.
+    return Math.min(0.9, 3.8 / (count - 1))
+  }, [count])
+
+  const pillarWidth = useMemo(
+    () => Math.max(0.22, Math.min(0.42, spacing * 0.58 || 0.42)),
+    [spacing],
+  )
+
   const points = useMemo(
     () =>
       values.map((value, index) => {
-        const height = Math.max(1.2, value / 24)
-        const x = (index - (values.length - 1) / 2) * 0.95
+        const height = MathUtils.clamp(value / 26, 1.15, 3.7)
+        const x = (index - (values.length - 1) / 2) * spacing
         return { x, height, color: analyticsPalette[index % analyticsPalette.length] }
       }),
-    [values],
+    [spacing, values],
   )
 
   useFrame((state) => {
     if (!groupRef.current) return
-    const elapsed = state.clock.getElapsedTime()
+    const targetYaw = state.pointer.x * 0.22
+    const targetPitch = state.pointer.y * 0.08
+
     groupRef.current.rotation.y = MathUtils.lerp(
       groupRef.current.rotation.y,
-      state.pointer.x * 0.4 + elapsed * 0.08,
-      0.04,
+      targetYaw,
+      0.06,
+    )
+    groupRef.current.rotation.x = MathUtils.lerp(
+      groupRef.current.rotation.x,
+      targetPitch,
+      0.06,
     )
   })
 
@@ -37,7 +56,7 @@ function Pillars({ values }: AnalyticsPillarsSceneProps) {
       {points.map((point, index) => (
         <Float key={`${point.x}-${point.height}`} speed={1.4 + index * 0.1} floatIntensity={0.25}>
           <mesh position={[point.x, point.height / 2 - 1.05, 0]}>
-            <boxGeometry args={[0.42, point.height, 0.42]} />
+            <boxGeometry args={[pillarWidth, point.height, pillarWidth]} />
             <meshStandardMaterial
               color={point.color}
               emissive={point.color}
@@ -62,7 +81,7 @@ function Pillars({ values }: AnalyticsPillarsSceneProps) {
 
 export function AnalyticsPillarsScene({ values }: AnalyticsPillarsSceneProps) {
   return (
-    <SceneShell className="min-h-[20rem]" cameraPosition={[0, 0.6, 6.5]} fov={42}>
+    <SceneShell className="min-h-[20rem]" cameraPosition={[0, 0.6, 7.4]} fov={44}>
       <ambientLight intensity={0.65} />
       <directionalLight position={[4, 5, 4]} intensity={1.35} color="#67e8f9" />
       <directionalLight position={[-3, 2, 3]} intensity={0.85} color="#a78bfa" />

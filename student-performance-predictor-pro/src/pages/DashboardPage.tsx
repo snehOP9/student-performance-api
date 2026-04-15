@@ -28,7 +28,24 @@ import { kpiData } from '../data/mock'
 import { useAppStore } from '../store/appStore'
 
 export function DashboardPage() {
-  const { assessmentDraft, currentPrediction, currentUncertainty, currentRecommendations } = useAppStore()
+  const {
+    assessmentDraft,
+    currentPrediction,
+    currentPredictionSource,
+    currentUncertainty,
+    currentRecommendations,
+  } = useAppStore()
+
+  const strategicRead = useMemo(() => {
+    const uncertaintyPct = Math.round(currentUncertainty.uncertainty * 100)
+    if (currentUncertainty.prediction_set === '{0,1}' || uncertaintyPct >= 30) {
+      return 'Uncertainty is currently high. Validate context and collect another week of data before escalating interventions.'
+    }
+    if (uncertaintyPct >= 20) {
+      return 'Uncertainty is moderate. Start with low-regret interventions and verify directional movement after one cycle.'
+    }
+    return 'Uncertainty is lower for this profile. Execute the top recommendation now and monitor weekly drift.'
+  }, [currentUncertainty.prediction_set, currentUncertainty.uncertainty])
 
   const kpis = useMemo(
     () => [
@@ -52,7 +69,7 @@ export function DashboardPage() {
       <SectionTitle
         eyebrow="Main hub"
         title="AI command center"
-        subtitle="A live premium workspace for tracking current student health, interventions, and confidence-aware predictions."
+        subtitle="A live workspace for tracking risk signals, uncertainty, and intervention priorities over time."
         action={
           <Link to="/assessment">
             <Button>
@@ -62,6 +79,29 @@ export function DashboardPage() {
           </Link>
         }
       />
+
+      <Card
+        className={
+          currentPredictionSource === 'live'
+            ? 'border-emerald-300/20 bg-emerald-400/10'
+            : 'border-amber-300/20 bg-amber-400/10'
+        }
+      >
+        <p className="text-[0.7rem] uppercase tracking-[0.24em] text-slate-100/80">
+          {currentPredictionSource === 'live' ? 'Live workspace state' : 'Demo workspace state'}
+        </p>
+        <p
+          className={
+            currentPredictionSource === 'live'
+              ? 'mt-2 text-sm text-emerald-100'
+              : 'mt-2 text-sm text-amber-100'
+          }
+        >
+          {currentPredictionSource === 'live'
+            ? 'Dashboard cards now reflect the latest assessment you submitted.'
+            : 'The dashboard is currently showing seeded demo analytics. Run a fresh assessment to replace these with live results.'}
+        </p>
+      </Card>
 
       <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
         <Card className="overflow-hidden border-cyan-300/20 bg-[linear-gradient(135deg,rgba(8,15,34,0.94),rgba(8,15,34,0.78),rgba(34,211,238,0.08))]">
@@ -75,8 +115,8 @@ export function DashboardPage() {
                 </span>
               </h2>
               <p className="mt-4 text-slate-300">
-                The model is currently reading a {currentPrediction.risk_band.toLowerCase()} risk pattern driven by
-                attendance variance, concentrated study windows, and recovery momentum.
+                The model currently estimates a {currentPrediction.risk_band.toLowerCase()} risk pattern, often influenced
+                by attendance variance, concentrated study windows, and recovery momentum.
               </p>
               <div className="mt-6 grid gap-3 sm:grid-cols-3">
                 <Card className="bg-white/5 p-4">
@@ -93,9 +133,18 @@ export function DashboardPage() {
                   <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Safety layer</p>
                   <p className="mt-2 flex items-center gap-2 text-sm text-emerald-200">
                     <ShieldCheck className="size-4" />
-                    Confidence-aware output enabled
+                    Uncertainty-aware output enabled
                   </p>
                 </Card>
+              </div>
+
+              <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-200">
+                <Badge className="border-white/20 bg-white/8 text-slate-100">
+                  Prediction set: {currentUncertainty.prediction_set ?? 'n/a'}
+                </Badge>
+                <Badge className="border-white/20 bg-white/8 text-slate-100">
+                  Uncertainty: {Math.round(currentUncertainty.uncertainty * 100)}%
+                </Badge>
               </div>
             </div>
 
@@ -115,10 +164,7 @@ export function DashboardPage() {
           </div>
           <div className="mt-5 rounded-[1.35rem] border border-cyan-300/20 bg-cyan-400/10 p-4">
             <p className="text-xs uppercase tracking-[0.24em] text-cyan-100/80">Strategic read</p>
-            <p className="mt-2 text-sm text-slate-100">
-              Confidence is healthy enough to act now, but keeping the next 7-day attendance streak stable will reduce the
-              residual uncertainty fastest.
-            </p>
+            <p className="mt-2 text-sm text-slate-100">{strategicRead}</p>
           </div>
         </Card>
       </div>

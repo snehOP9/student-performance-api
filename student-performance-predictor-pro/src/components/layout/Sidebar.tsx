@@ -45,13 +45,17 @@ export function Sidebar() {
   return (
     <aside className="sticky top-24 hidden h-[calc(100vh-7rem)] overflow-auto lg:block lg:w-[19rem]">
       <div className="glass-panel rounded-[2rem] border border-white/10 p-4">
-        <div className="mb-6 rounded-[1.5rem] border border-cyan-300/15 bg-[linear-gradient(135deg,rgba(34,211,238,0.12),rgba(99,102,241,0.06))] p-4">
+        <NavLink
+          to="/"
+          className="mb-6 block rounded-[1.5rem] border border-cyan-300/15 bg-[linear-gradient(135deg,rgba(34,211,238,0.12),rgba(99,102,241,0.06))] p-4 transition hover:border-cyan-300/35 hover:bg-[linear-gradient(135deg,rgba(34,211,238,0.2),rgba(99,102,241,0.12))]"
+          aria-label="Go to home page"
+        >
           <p className="text-[0.7rem] uppercase tracking-[0.28em] text-cyan-200/80">Neural cockpit</p>
           <h3 className="mt-2 text-lg font-semibold text-white">Student Performance Predictor Pro</h3>
           <p className="mt-2 text-sm text-slate-400">
             Premium academic intelligence, intervention design, and cohort-level forecasting.
           </p>
-        </div>
+        </NavLink>
 
         <div className="space-y-6">
           <NavSection label="Workspace" items={workspaceLinks} />

@@ -16,59 +16,57 @@ import { NeuralHeroScene } from '../components/three/NeuralHeroScene'
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { Card } from '../components/ui/card'
-
 const heroPhrases = [
   'Predict risk before it compounds.',
   'Turn uncertainty into action.',
   'Design interventions with AI precision.',
 ]
-
 const heroStats = [
-  { label: 'Predictions generated', value: 13840, suffix: '+' },
-  { label: 'Average confidence', value: 82, suffix: '%' },
-  { label: 'Institutions onboarded', value: 94, suffix: '+' },
-  { label: 'Intervention lift', value: 27, suffix: '%' },
+  { label: 'Core prediction APIs', value: 3, suffix: '' },
+  { label: 'Risk bands', value: 3, suffix: '' },
+  { label: 'Top actions returned', value: 5, suffix: '' },
+  { label: 'Uncertainty outputs', value: 2, suffix: '' },
 ]
 
 const featureCards = [
   {
-    title: 'Cinematic prediction workflows',
-    description: 'A flagship product experience with depth, glow, 3D motion, and decision-ready clarity.',
+    title: 'Fast assessment workflow',
+    description: 'Capture recent study, attendance, sleep, and context signals in a guided flow.',
     icon: BrainCircuit,
   },
   {
-    title: 'Confidence-aware forecasting',
-    description: 'Risk is paired with uncertainty so teams can act boldly without acting blindly.',
+    title: 'Uncertainty-aware forecasting',
+    description: 'Every risk estimate is paired with confidence and uncertainty for safer decisions.',
     icon: ShieldCheck,
   },
   {
     title: 'Personalized recommendations',
-    description: 'The model transforms raw signals into interventions, timelines, and weekly action plans.',
+    description: 'Translate risk drivers into practical next steps and re-check impact in the next cycle.',
     icon: WandSparkles,
   },
   {
-    title: 'Institutional intelligence',
-    description: 'Teacher, admin, and student views stay in sync across cohorts, classes, and individual journeys.',
+    title: 'Multi-role workspace',
+    description: 'Student, teacher, and institutional views share one consistent analytics backbone.',
     icon: Layers3,
   },
 ]
 
 const testimonials = [
-  'The product feels like a mission-control layer for academic success. It changed how our teachers intervene.',
-  'Students finally understand what to do next instead of just seeing a scary score.',
-  'The confidence layer gave our leadership team the clarity to trust the model in real planning cycles.',
+  'The workflow helps us prioritize who needs support first, instead of guessing from intuition alone.',
+  'Students get clearer next steps instead of only seeing a raw score output.',
+  'Uncertainty flags help us decide when to gather more data before escalating interventions.',
 ]
 
 const faqItems = [
   {
     question: 'What makes the prediction trustworthy?',
     answer:
-      'The model combines engagement, attendance, sleep, study behavior, and context variables, then pairs the result with uncertainty to show how stable that forecast really is.',
+      'Predictions combine behavioral and context signals and always include uncertainty. Use the result as decision support, not as a standalone final judgment.',
   },
   {
     question: 'Who is this product for?',
     answer:
-      'Students, teachers, counselors, and institution leaders all get tailored interfaces built on the same prediction core.',
+      'Primary users are students, counselors, and educators who need early warning plus concrete intervention planning.',
   },
   {
     question: 'Does it still work when the API is offline?',
@@ -98,9 +96,10 @@ function TypingHeroLine() {
   }, [phraseIndex, typed])
 
   return (
-    <div className="flex min-h-6 items-center gap-2 text-cyan-100">
+    <div className="flex items-center gap-2 text-cyan-100">
       <Sparkles className="size-4 text-cyan-300" />
       <span>{typed}</span>
+      <span className="inline-block h-5 w-px animate-pulse bg-cyan-300" />
     </div>
   )
 }
@@ -119,16 +118,19 @@ export function LandingPage() {
               Student Performance Predictor Pro
             </p>
             <p className="mt-2 text-sm text-slate-300">
-              Premium academic intelligence for the next generation of schools.
+              Decision-support for student success teams.
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Link to="/login">
-              <Button variant="ghost">Login</Button>
+            <Link to="/dashboard">
+              <Button variant="outline">
+                View workspace demo
+                <Sparkles className="ml-2 size-4" />
+              </Button>
             </Link>
-            <Link to="/signup">
+            <Link to="/assessment">
               <Button>
-                Get started
+                Start assessment
                 <ArrowRight className="ml-2 size-4" />
               </Button>
             </Link>
@@ -145,28 +147,48 @@ export function LandingPage() {
           >
             <Badge>Immersive AI forecasting platform</Badge>
             <h1 className="mt-5 text-5xl font-bold leading-[0.95] md:text-7xl">
-              Build an
-              <span className="aurora-text block">intervention engine</span>
-              for every student.
+              Predict risk,
+              <span className="aurora-text block">plan interventions,</span>
+              track outcomes.
             </h1>
             <p className="mt-6 max-w-2xl text-lg text-slate-300 md:text-xl">
-              Student Performance Predictor Pro blends machine learning, elegant motion, and 3D storytelling into a
-              product experience that feels fundable, futuristic, and ready for real educational teams.
+              Use recent learning signals to estimate academic risk, review uncertainty, and choose the next support action.
+              Designed for self-reflection, counseling, and educator-led intervention planning.
             </p>
             <div className="mt-6">
               <TypingHeroLine />
             </div>
 
+            <div className="mt-6 grid gap-2 sm:grid-cols-3">
+              <Card className="h-full">
+                <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Who it is for</p>
+                <p className="mt-2 text-sm text-slate-200">Students, counselors, teachers, and student-success teams.</p>
+              </Card>
+              <Card className="h-full">
+                <p className="text-xs uppercase tracking-[0.18em] text-slate-500">How to use results</p>
+                <p className="mt-2 text-sm text-slate-200">Treat outputs as decision support with human review.</p>
+              </Card>
+              <Card className="h-full">
+                <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Trust and limits</p>
+                <p className="mt-2 text-sm text-slate-200">Read methodology and model limitations before operational use.</p>
+              </Card>
+            </div>
+
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link to="/onboarding">
+              <Link to="/assessment">
                 <Button size="lg">
-                  Start guided onboarding
+                  Start live assessment
                   <ArrowRight className="ml-2 size-4" />
+                </Button>
+              </Link>
+              <Link to="/onboarding">
+                <Button size="lg" variant="outline">
+                  Start guided onboarding
                 </Button>
               </Link>
               <Link to="/dashboard">
                 <Button size="lg" variant="outline">
-                  Explore live product
+                  Explore workspace demo
                 </Button>
               </Link>
             </div>
@@ -197,14 +219,14 @@ export function LandingPage() {
             className="relative"
           >
             <div className="pointer-events-none absolute -inset-10 rounded-full bg-cyan-400/10 blur-3xl" />
-            <NeuralHeroScene className="min-h-[35rem] lg:min-h-[38rem]" />
+            <NeuralHeroScene className="h-[35rem] lg:h-[38rem]" />
             <div className="pointer-events-none absolute left-5 top-5 rounded-full border border-cyan-300/20 bg-slate-950/55 px-4 py-2 text-[0.7rem] uppercase tracking-[0.28em] text-cyan-100/80 backdrop-blur-xl">
               Neural field active
             </div>
             <div className="pointer-events-none absolute bottom-5 left-5 max-w-[17rem] rounded-[1.35rem] border border-white/10 bg-slate-950/58 p-4 backdrop-blur-xl">
               <p className="text-[0.65rem] uppercase tracking-[0.26em] text-slate-500">Live AI layer</p>
               <p className="mt-3 text-sm leading-6 text-slate-100">
-                Confidence-aware signals, intervention mapping, and predictive orbit visuals are running in real time.
+                Risk estimates and uncertainty signals update in real time as inputs change.
               </p>
             </div>
             <div className="pointer-events-none absolute bottom-5 right-5 grid gap-2">
@@ -250,14 +272,13 @@ export function LandingPage() {
             <p className="text-[0.7rem] uppercase tracking-[0.28em] text-cyan-200/80">AI visualization layer</p>
             <h2 className="mt-3 text-3xl font-bold text-white">Not a dashboard. A cinematic command center.</h2>
             <p className="mt-4 text-slate-300">
-              The interface uses depth, motion, and subtle 3D environments to make predictive analytics feel intuitive,
-              alive, and premium instead of static and spreadsheet-like.
+              The interface is optimized for guided interpretation so users understand what changed risk and what to do next.
             </p>
             <div className="mt-6 grid gap-3">
               {[
-                '3D neural hero scenes with pointer-reactive motion',
-                'Glow-based risk language that changes with confidence',
-                'Animated forms, counters, panels, and onboarding journeys',
+                'Input capture with transparent validation ranges',
+                'Risk plus uncertainty surfaced together in decision views',
+                'Direct links to methodology, limitations, privacy, and terms',
               ].map((item) => (
                 <div
                   key={item}
@@ -361,22 +382,22 @@ export function LandingPage() {
               <div>
                 <p className="text-[0.7rem] uppercase tracking-[0.28em] text-cyan-200/80">Launch your showcase</p>
                 <h2 className="mt-3 text-4xl font-bold text-white">
-                  Turn student risk forecasting into your standout product story.
+                  Start with a practical pilot workflow.
                 </h2>
                 <p className="mt-4 max-w-3xl text-slate-300">
-                  This is the kind of interface that wins attention in demos, portfolios, and real stakeholder rooms.
+                  Run an assessment, review uncertainty, apply the top recommendation, and re-check after one week.
                 </p>
               </div>
               <div className="flex flex-wrap gap-3">
-                <Link to="/signup">
+                <Link to="/assessment">
                   <Button size="lg">
-                    Start free experience
+                    Run live assessment
                     <ArrowRight className="ml-2 size-4" />
                   </Button>
                 </Link>
                 <Link to="/dashboard">
                   <Button size="lg" variant="outline">
-                    Enter dashboard
+                    View demo workspace
                   </Button>
                 </Link>
               </div>
@@ -388,8 +409,13 @@ export function LandingPage() {
       <footer className="border-t border-white/10 py-8">
         <div className="mx-auto flex max-w-[1320px] flex-wrap items-center justify-between gap-4 px-4 text-sm text-slate-400">
           <p>2026 Student Performance Predictor Pro</p>
-          <div className="flex items-center gap-5">
+          <div className="flex flex-wrap items-center gap-5">
             <Link to="/about">Methodology</Link>
+            <Link to="/how-it-works">How it works</Link>
+            <Link to="/limitations">Model limits</Link>
+            <Link to="/governance">Model governance</Link>
+            <Link to="/privacy">Privacy</Link>
+            <Link to="/terms">Terms</Link>
             <Link to="/support">Support</Link>
             <Link to="/roadmap">Roadmap</Link>
           </div>

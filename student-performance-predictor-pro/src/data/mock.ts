@@ -1,9 +1,12 @@
 import type {
   AssessmentPayload,
+  CohortQueueItem,
   ComparisonStudent,
+  GovernanceSnapshot,
   PredictionHistoryItem,
   PredictionResponse,
   RecommendationItem,
+  RecommendationFollowUp,
   UncertaintyResponse,
 } from '../types'
 
@@ -39,11 +42,43 @@ export const defaultAssessment: AssessmentPayload = {
 export const fallbackPrediction: PredictionResponse = {
   risk_probability: 41.6,
   risk_band: 'Moderate',
+  summary: 'Attendance variability and deadline-heavy study patterns are the strongest reasons this seeded demo profile stays in the moderate-risk band.',
   explanation: [
     'Attendance variability is increasing risk exposure.',
     'Sleep consistency is slightly below benchmark cohort.',
     'Study engagement is strong but concentrated before deadlines.',
   ],
+  drivers: [
+    {
+      feature: 'attendance_mean',
+      label: 'Attendance consistency',
+      displayValue: '86.0%',
+      direction: 'increase',
+      contribution: 0.18,
+    },
+    {
+      feature: 'cramming_indicator_mean',
+      label: 'Cramming intensity',
+      displayValue: '32.0%',
+      direction: 'increase',
+      contribution: 0.12,
+    },
+    {
+      feature: 'study_hours_sum',
+      label: 'Study volume',
+      displayValue: '42.0',
+      direction: 'decrease',
+      contribution: -0.09,
+    },
+    {
+      feature: 'sleep_mean',
+      label: 'Sleep recovery',
+      displayValue: '7.1h',
+      direction: 'decrease',
+      contribution: -0.07,
+    },
+  ],
+  explainerAvailable: true,
 }
 
 export const fallbackUncertainty: UncertaintyResponse = {
@@ -88,7 +123,7 @@ export const kpiData = [
 export const predictionHistorySeed: PredictionHistoryItem[] = [
   {
     id: 'hist-1',
-    studentName: 'Aarav Rao',
+    studentName: 'Sneh',
     generatedAt: '2026-03-22 09:12',
     confidence: 0.82,
     risk_probability: 41.6,
@@ -97,7 +132,7 @@ export const predictionHistorySeed: PredictionHistoryItem[] = [
   },
   {
     id: 'hist-2',
-    studentName: 'Maya Singh',
+    studentName: 'Ishita',
     generatedAt: '2026-03-19 14:30',
     confidence: 0.79,
     risk_probability: 34.2,
@@ -110,7 +145,7 @@ export const predictionHistorySeed: PredictionHistoryItem[] = [
   },
   {
     id: 'hist-3',
-    studentName: 'Rohan Das',
+    studentName: 'Saurabh',
     generatedAt: '2026-03-14 16:44',
     confidence: 0.86,
     risk_probability: 62.8,
@@ -126,7 +161,7 @@ export const predictionHistorySeed: PredictionHistoryItem[] = [
 export const comparisonProfiles: ComparisonStudent[] = [
   {
     id: 'cmp-1',
-    name: 'Aarav Rao',
+    name: 'Sneh',
     track: 'STEM Intensive',
     risk: 41.6,
     attendance: 89,
@@ -136,7 +171,7 @@ export const comparisonProfiles: ComparisonStudent[] = [
   },
   {
     id: 'cmp-2',
-    name: 'Nia Thompson',
+    name: 'Ishita',
     track: 'Honors Hybrid',
     risk: 33.2,
     attendance: 94,
@@ -156,4 +191,67 @@ export const cohortDistribution = [
   { name: 'Low', value: 46 },
   { name: 'Moderate', value: 37 },
   { name: 'High', value: 17 },
+]
+
+export const governanceSnapshot: GovernanceSnapshot = {
+  modelVersion: 'lgbm-v3.2.1',
+  trainingWindow: '2025-09 to 2026-02',
+  lastTrainingDate: '2026-03-28',
+  artifactFingerprint: 'lgbm:7f93d1c · conformal:qhat-0.213',
+  calibrationBrier: 0.162,
+  expectedCalibrationError: 0.043,
+  driftStatus: 'Monitor',
+  lastDriftCheck: '2026-04-12 08:10',
+  notes: [
+    'Attendance distribution shifted by +4.8 percentage points versus training baseline.',
+    'No severe feature drift detected in sleep_mean or study_hours_mean.',
+    'Review calibration monthly for Grade 12 cohorts.',
+  ],
+}
+
+export const cohortQueueSeed: CohortQueueItem[] = [
+  {
+    id: 'q-1',
+    studentName: 'Sneh',
+    className: '10-A',
+    riskBand: 'High',
+    status: 'Needs triage',
+    owner: 'Sneh',
+    nextReview: '2026-04-16',
+    lastUpdated: '2026-04-13 09:05',
+  },
+  {
+    id: 'q-2',
+    studentName: 'Ishita',
+    className: '10-B',
+    riskBand: 'Moderate',
+    status: 'In progress',
+    owner: 'Ishita',
+    nextReview: '2026-04-18',
+    lastUpdated: '2026-04-13 11:32',
+  },
+  {
+    id: 'q-3',
+    studentName: 'Saurabh',
+    className: '11-A',
+    riskBand: 'Low',
+    status: 'Resolved',
+    owner: 'Saurabh',
+    nextReview: '2026-04-24',
+    lastUpdated: '2026-04-12 16:20',
+  },
+]
+
+export const recommendationFollowUpSeed: RecommendationFollowUp[] = [
+  {
+    id: 'fu-1',
+    studentName: 'Sneh',
+    actionTitle: 'Adopt 25-minute deep work blocks',
+    riskBefore: 48.1,
+    riskAfter: 41.6,
+    uncertaintyBefore: 23,
+    uncertaintyAfter: 18,
+    createdAt: '2026-04-10 18:42',
+    outcomeNote: 'Completed four days with full deep-work schedule and improved assignment turn-in.',
+  },
 ]

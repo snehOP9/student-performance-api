@@ -1,6 +1,8 @@
 export type RiskBand = 'Low' | 'Moderate' | 'High'
 export type ThemeMode = 'dark' | 'light'
 export type UserRole = 'student' | 'teacher' | 'admin'
+export type InterventionStatus = 'Needs triage' | 'In progress' | 'Escalate' | 'Resolved'
+export type PredictionSource = 'demo' | 'live'
 
 export type AuthUser = {
   id: string
@@ -39,15 +41,30 @@ export type AssessmentPayload = {
   tutoring: number
 }
 
+export type PredictionDriver = {
+  feature: string
+  label: string
+  displayValue: string
+  direction: 'increase' | 'decrease' | 'context'
+  contribution: number
+}
+
 export type PredictionResponse = {
   risk_probability: number
   risk_band: RiskBand
   explanation: string[]
+  summary?: string
+  drivers?: PredictionDriver[]
+  explainerAvailable?: boolean
 }
 
 export type UncertaintyResponse = {
   confidence: number
   uncertainty: number
+  prediction_set?: '{0}' | '{1}' | '{0,1}'
+  uncertainty_level?: string
+  risk_band?: RiskBand
+  risk_probability?: number
 }
 
 export type PredictionHistoryItem = PredictionResponse & {
@@ -63,6 +80,41 @@ export type RecommendationItem = {
   description: string
   impact: 'High impact' | 'Quick win' | 'Long-term'
   expectedReduction: number
+}
+
+export type RecommendationFollowUp = {
+  id: string
+  studentName: string
+  actionTitle: string
+  riskBefore: number
+  riskAfter: number
+  uncertaintyBefore: number
+  uncertaintyAfter: number
+  createdAt: string
+  outcomeNote: string
+}
+
+export type CohortQueueItem = {
+  id: string
+  studentName: string
+  className: string
+  riskBand: RiskBand
+  status: InterventionStatus
+  owner: string
+  nextReview: string
+  lastUpdated: string
+}
+
+export type GovernanceSnapshot = {
+  modelVersion: string
+  trainingWindow: string
+  lastTrainingDate: string
+  artifactFingerprint: string
+  calibrationBrier: number
+  expectedCalibrationError: number
+  driftStatus: 'Stable' | 'Monitor' | 'Action required'
+  lastDriftCheck: string
+  notes: string[]
 }
 
 export type ComparisonStudent = {

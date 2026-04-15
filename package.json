@@ -3,9 +3,7 @@
   "private": true,
   "scripts": {
     "dev": "npm --prefix student-performance-predictor-pro run dev -- --port 3000",
-    "build": "npm --prefix student-performance-predictor-pro run build",
-    "dev:student-ui": "npm --prefix student-ui run dev -- -p 3001",
-    "dev:spp-pro": "npm --prefix spp-pro run dev -- --port 3002"
+    "build": "npm --prefix student-performance-predictor-pro run build"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

@@ -2,9 +2,11 @@ import axios from 'axios'
 import type {
   AssessmentPayload,
   AuthUser,
+  PredictionDriver,
   PredictionResponse,
   RecommendationItem,
   RiskBand,
+  UncertaintyResponse,
 } from '../types'
 
 type ApiErrorPayload =
@@ -17,8 +19,12 @@ type ApiErrorPayload =
 
 type PredictionApiResponse = {
   explanation?: unknown
+  explanation_summary?: unknown
+  explainer_available?: unknown
   risk_percentage?: unknown
+  risk_probability?: unknown
   risk_band?: unknown
+  top_features?: unknown
 }
 
 type RecommendationApiResponse = {
@@ -110,11 +116,43 @@ function mapPrediction(data: PredictionApiResponse): PredictionResponse {
   const explanation = Array.isArray(data?.explanation)
     ? data.explanation.map((item: unknown) => String(item))
     : []
+  const drivers: PredictionDriver[] = Array.isArray(data?.top_features)
+    ? data.top_features
+        .map((item): PredictionDriver | null => {
+          if (!item || typeof item !== 'object') {
+            return null
+          }
+
+          const candidate = item as Record<string, unknown>
+          const direction = candidate.direction
+          return {
+            feature: String(candidate.feature ?? 'unknown_feature'),
+            label: String(candidate.label ?? candidate.feature ?? 'Unknown feature'),
+            displayValue: String(candidate.display_value ?? candidate.value ?? 'n/a'),
+            direction:
+              direction === 'increase' || direction === 'decrease' || direction === 'context'
+                ? direction
+                : 'context',
+            contribution: Number(candidate.shap_value ?? candidate.importance_gain ?? 0),
+          }
+        })
+        .filter((item): item is PredictionDriver => item !== null)
+    : []
+
+  const riskPercentage = Number(
+    data?.risk_percentage ?? Number(data?.risk_probability ?? 0) * 100,
+  )
 
   return {
-    risk_probability: Number(data?.risk_percentage ?? 0),
+    risk_probability: riskPercentage,
     risk_band: mapRiskBand(data?.risk_band),
     explanation: explanation.length ? explanation : ['Model explanation is temporarily unavailable.'],
+    summary:
+      typeof data?.explanation_summary === 'string' && data.explanation_summary.trim()
+        ? data.explanation_summary
+        : explanation[0] ?? 'Model explanation is temporarily unavailable.',
+    drivers,
+    explainerAvailable: Boolean(data?.explainer_available),
   }
 }
 
@@ -174,11 +212,15 @@ export async function predictRisk(payload: AssessmentPayload): Promise<Predictio
   return mapPrediction(data)
 }
 
-export async function getUncertainty(payload: AssessmentPayload): Promise<{ confidence: number; uncertainty: number }> {
+export async function getUncertainty(payload: AssessmentPayload): Promise<UncertaintyResponse> {
   const { data } = await api.post('/uncertainty', payload)
   return {
     confidence: Number(data?.confidence ?? 0),
     uncertainty: Number(data?.uncertainty ?? 0),
+    prediction_set: data?.prediction_set,
+    uncertainty_level: typeof data?.uncertainty_level === 'string' ? data.uncertainty_level : undefined,
+    risk_band: mapRiskBand(data?.risk_band),
+    risk_probability: Number(data?.risk_probability ?? 0),
   }
 }
 

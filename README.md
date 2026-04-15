@@ -3,8 +3,8 @@
 Unified repository for:
 
 - `api/` -> FastAPI backend for prediction, uncertainty, recommendations, and auth
+- `artifacts/` -> model artifacts loaded by the backend at runtime
 - `student-performance-predictor-pro/` -> Vite + React frontend used for local development and Vercel deployment
-- `app/` -> legacy Streamlit prototype kept only as reference
 
 ## Repository
 
@@ -68,5 +68,5 @@ npm run dev -- --port 3000
 ## Notes
 
 - Local root `npm run dev` already starts the Vite frontend on `localhost:3000`
-- The repo also contains `student-ui/`, but that is not the frontend selected for the canonical deployment path
 - Password hashing now uses a stable PBKDF2 flow and still supports legacy bcrypt hashes for existing accounts
+- The repository is intentionally trimmed to the canonical Vercel frontend and backend paths only

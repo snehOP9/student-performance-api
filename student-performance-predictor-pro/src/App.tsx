@@ -1,151 +1,85 @@
-import type { ReactElement } from 'react'
 import { useEffect } from 'react'
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import { AppShell } from './components/layout/AppShell'
-import { fetchMe, healthCheck, refreshSession } from './lib/api'
-import { clearSessionTokens, readSessionTokens, storeSessionTokens } from './lib/session'
+import { healthCheck } from './lib/api'
 import { useAppStore } from './store/appStore'
-import type { UserRole } from './types'
 import { AboutMethodologyPage } from './pages/AboutMethodologyPage'
 import { AnalyticsPage } from './pages/AnalyticsPage'
 import { AssessmentPage } from './pages/AssessmentPage'
-import { LoginPage, SignupPage, ForgotPasswordPage } from './pages/AuthPages'
 import { CompareProfilesPage } from './pages/CompareProfilesPage'
 import { ContactSupportPage } from './pages/ContactSupportPage'
 import { DashboardPage } from './pages/DashboardPage'
+import { HowItWorksPage } from './pages/HowItWorksPage'
 import { InstitutionalDashboardPage } from './pages/InstitutionalDashboardPage'
 import { LandingPage } from './pages/LandingPage'
+import { ModelGovernancePage } from './pages/ModelGovernancePage'
+import { ModelLimitationsPage } from './pages/ModelLimitationsPage'
 import { OnboardingPage } from './pages/OnboardingPage'
 import { PredictionHistoryPage } from './pages/PredictionHistoryPage'
 import { PredictionResultPage } from './pages/PredictionResultPage'
+import { PrivacyPage } from './pages/PrivacyPage'
 import { RecommendationsPage } from './pages/RecommendationsPage'
 import { RoadmapPage } from './pages/RoadmapPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { StudentProfilePage } from './pages/StudentProfilePage'
 import { TeacherDashboardPage } from './pages/TeacherDashboardPage'
+import { TermsPage } from './pages/TermsPage'
 
-function FullPageStatus({ label }: { label: string }) {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-950 px-6 text-center">
-      <div className="rounded-[1.75rem] border border-white/10 bg-white/5 px-8 py-6">
-        <p className="text-xs uppercase tracking-[0.28em] text-cyan-200/80">Session</p>
-        <p className="mt-3 text-sm text-slate-200">{label}</p>
-      </div>
-    </div>
-  )
-}
+function HomeRoute() {
+  const currentUser = useAppStore((state) => state.currentUser)
 
-function RequireAuth({
-  children,
-  roles,
-}: {
-  children: ReactElement
-  roles?: UserRole[]
-}) {
-  const location = useLocation()
-  const { authStatus, currentUser } = useAppStore()
-
-  if (authStatus === 'checking') {
-    return <FullPageStatus label="Restoring your secure session..." />
+  if (!currentUser) {
+    return <LandingPage />
   }
 
-  if (authStatus !== 'authenticated' || !currentUser) {
-    return <Navigate to="/login" replace state={{ from: location.pathname }} />
+  if (currentUser.role === 'admin') {
+    return <Navigate to="/institutional" replace />
   }
 
-  if (roles && !roles.includes(currentUser.role)) {
-    return <Navigate to="/dashboard" replace />
+  if (currentUser.role === 'teacher') {
+    return <Navigate to="/teacher" replace />
   }
 
-  return children
-}
-
-function PublicOnly({ children }: { children: ReactElement }) {
-  const { authStatus } = useAppStore()
-  if (authStatus === 'checking') {
-    return <FullPageStatus label="Checking your session..." />
-  }
-  if (authStatus === 'authenticated') {
-    return <Navigate to="/dashboard" replace />
-  }
-  return children
+  return <Navigate to="/student" replace />
 }
 
 function RoutedShell() {
   return (
     <Routes>
-      <Route
-        path="/"
-        element={
-          <PublicOnly>
-            <LandingPage />
-          </PublicOnly>
-        }
-      />
-      <Route
-        path="/login"
-        element={
-          <PublicOnly>
-            <LoginPage />
-          </PublicOnly>
-        }
-      />
-      <Route
-        path="/signup"
-        element={
-          <PublicOnly>
-            <SignupPage />
-          </PublicOnly>
-        }
-      />
-      <Route
-        path="/forgot-password"
-        element={
-          <PublicOnly>
-            <ForgotPasswordPage />
-          </PublicOnly>
-        }
-      />
+      <Route path="/" element={<HomeRoute />} />
+      <Route path="/login" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/signup" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/forgot-password" element={<Navigate to="/dashboard" replace />} />
       <Route
         path="*"
         element={
-          <RequireAuth>
-            <AppShell>
-              <Routes>
-                <Route path="/dashboard" element={<DashboardPage />} />
-                <Route path="/assessment" element={<AssessmentPage />} />
-                <Route path="/prediction" element={<PredictionResultPage />} />
-                <Route path="/recommendations" element={<RecommendationsPage />} />
-                <Route path="/analytics" element={<AnalyticsPage />} />
-                <Route
-                  path="/institutional"
-                  element={
-                    <RequireAuth roles={['admin']}>
-                      <InstitutionalDashboardPage />
-                    </RequireAuth>
-                  }
-                />
-                <Route
-                  path="/teacher"
-                  element={
-                    <RequireAuth roles={['teacher', 'admin']}>
-                      <TeacherDashboardPage />
-                    </RequireAuth>
-                  }
-                />
-                <Route path="/profile" element={<StudentProfilePage />} />
-                <Route path="/history" element={<PredictionHistoryPage />} />
-                <Route path="/compare" element={<CompareProfilesPage />} />
-                <Route path="/roadmap" element={<RoadmapPage />} />
-                <Route path="/onboarding" element={<OnboardingPage />} />
-                <Route path="/about" element={<AboutMethodologyPage />} />
-                <Route path="/support" element={<ContactSupportPage />} />
-                <Route path="/settings" element={<SettingsPage />} />
-                <Route path="*" element={<Navigate to="/dashboard" replace />} />
-              </Routes>
-            </AppShell>
-          </RequireAuth>
+          <AppShell>
+            <Routes>
+              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/student" element={<StudentProfilePage />} />
+              <Route path="/assessment" element={<AssessmentPage />} />
+              <Route path="/prediction" element={<PredictionResultPage />} />
+              <Route path="/recommendations" element={<RecommendationsPage />} />
+              <Route path="/analytics" element={<AnalyticsPage />} />
+              <Route path="/institutional" element={<InstitutionalDashboardPage />} />
+              <Route path="/teacher" element={<TeacherDashboardPage />} />
+              <Route path="/profile" element={<StudentProfilePage />} />
+              <Route path="/history" element={<PredictionHistoryPage />} />
+              <Route path="/compare" element={<CompareProfilesPage />} />
+              <Route path="/roadmap" element={<RoadmapPage />} />
+              <Route path="/onboarding" element={<OnboardingPage />} />
+              <Route path="/about" element={<AboutMethodologyPage />} />
+              <Route path="/how-it-works" element={<HowItWorksPage />} />
+              <Route path="/limitations" element={<ModelLimitationsPage />} />
+              <Route path="/governance" element={<ModelGovernancePage />} />
+              <Route path="/privacy" element={<PrivacyPage />} />
+              <Route path="/terms" element={<TermsPage />} />
+              <Route path="/support" element={<ContactSupportPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            </Routes>
+          </AppShell>
         }
       />
     </Routes>
@@ -153,13 +87,7 @@ function RoutedShell() {
 }
 
 function App() {
-  const {
-    setApiStatus,
-    theme,
-    setAuthStatus,
-    setAuthenticated,
-    clearAuthState,
-  } = useAppStore()
+  const { setApiStatus, theme } = useAppStore()
 
   useEffect(() => {
     document.documentElement.classList.toggle('light', theme === 'light')
@@ -185,56 +113,6 @@ function App() {
       mounted = false
     }
   }, [setApiStatus])
-
-  useEffect(() => {
-    let mounted = true
-
-    async function bootstrapSession() {
-      setAuthStatus('checking')
-      const { accessToken, refreshToken } = readSessionTokens()
-
-      if (!accessToken && !refreshToken) {
-        if (mounted) clearAuthState()
-        return
-      }
-
-      try {
-        if (accessToken) {
-          const user = await fetchMe(accessToken)
-          if (mounted) setAuthenticated(user)
-          return
-        }
-
-        throw new Error('Access token missing')
-      } catch {
-        if (!refreshToken) {
-          clearSessionTokens()
-          if (mounted) clearAuthState()
-          return
-        }
-      }
-
-      try {
-        const refreshed = await refreshSession(refreshToken!)
-        if (!refreshed.access_token || !refreshed.refresh_token) {
-          throw new Error('Refresh did not return new tokens')
-        }
-
-        storeSessionTokens(refreshed.access_token, refreshed.refresh_token)
-        const user = await fetchMe(refreshed.access_token)
-        if (mounted) setAuthenticated(user)
-      } catch {
-        clearSessionTokens()
-        if (mounted) clearAuthState()
-      }
-    }
-
-    void bootstrapSession()
-
-    return () => {
-      mounted = false
-    }
-  }, [clearAuthState, setAuthStatus, setAuthenticated])
 
   return (
     <>

@@ -48,6 +48,14 @@ body {
     linear-gradient(180deg, #020617 0%, #030816 45%, #020617 100%);
 }
 
+html.light body {
+  background:
+    radial-gradient(circle at 14% 12%, rgba(56, 189, 248, 0.16), transparent 32%),
+    radial-gradient(circle at 88% 8%, rgba(168, 85, 247, 0.14), transparent 32%),
+    radial-gradient(circle at 55% 95%, rgba(34, 211, 238, 0.14), transparent 30%),
+    linear-gradient(180deg, #f4f8ff 0%, #ecf3ff 48%, #f8fbff 100%);
+}
+
 body::before {
   content: '';
   position: fixed;
@@ -62,6 +70,13 @@ body::before {
   mask-image: radial-gradient(circle at center, black 18%, transparent 82%);
 }
 
+html.light body::before {
+  opacity: 0.16;
+  background-image:
+    linear-gradient(rgba(59, 130, 246, 0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(59, 130, 246, 0.12) 1px, transparent 1px);
+}
+
 body::after {
   content: '';
   position: fixed;
@@ -73,6 +88,14 @@ body::after {
     radial-gradient(circle at 75% 8%, rgba(168, 85, 247, 0.18), transparent 32%),
     radial-gradient(circle at 48% 90%, rgba(34, 211, 238, 0.12), transparent 28%);
   filter: blur(48px);
+}
+
+html.light body::after {
+  background:
+    radial-gradient(circle at 20% 18%, rgba(56, 189, 248, 0.2), transparent 28%),
+    radial-gradient(circle at 78% 14%, rgba(167, 139, 250, 0.18), transparent 30%),
+    radial-gradient(circle at 52% 90%, rgba(14, 165, 233, 0.14), transparent 30%);
+  filter: blur(56px);
 }
 
 h1,
@@ -145,6 +168,160 @@ input[type='range']::-webkit-slider-thumb {
   background: linear-gradient(180deg, rgba(15, 23, 42, 0.72), rgba(15, 23, 42, 0.48));
   border: 1px solid rgba(148, 163, 184, 0.12);
   backdrop-filter: blur(26px);
+}
+
+html.light .glass-panel {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(241, 247, 255, 0.82));
+  border-color: rgba(59, 130, 246, 0.2);
+  box-shadow: 0 24px 72px -44px rgba(59, 130, 246, 0.38);
+}
+
+/* Light-mode bridge for existing dark utility classes */
+html.light [class*='bg-slate-950'] {
+  background-color: rgba(255, 255, 255, 0.88) !important;
+}
+
+html.light [class*='bg-slate-900'] {
+  background-color: rgba(246, 250, 255, 0.9) !important;
+}
+
+html.light [class*='bg-white/5'],
+html.light [class*='bg-white/6'],
+html.light [class*='bg-white/8'],
+html.light [class*='bg-white/10'] {
+  background-color: rgba(255, 255, 255, 0.8) !important;
+}
+
+html.light [class*='bg-[linear-gradient'] {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(240, 247, 255, 0.88)) !important;
+}
+
+html.light [class*='border-white/8'],
+html.light [class*='border-white/10'],
+html.light [class*='border-white/20'] {
+  border-color: rgba(71, 85, 105, 0.2) !important;
+}
+
+html.light [class*='text-white'],
+html.light [class*='text-slate-100'] {
+  color: #0f172a !important;
+}
+
+html.light [class*='text-slate-200'] {
+  color: #1e293b !important;
+}
+
+html.light [class*='text-slate-300'] {
+  color: #334155 !important;
+}
+
+html.light [class*='text-slate-400'] {
+  color: #475569 !important;
+}
+
+html.light [class*='text-slate-500'] {
+  color: #64748b !important;
+}
+
+/* Accent readability in light mode */
+html.light [class*='text-cyan-100'],
+html.light [class*='text-cyan-200'],
+html.light [class*='text-cyan-300'] {
+  color: #0e7490 !important;
+}
+
+html.light [class*='text-blue-100'],
+html.light [class*='text-blue-200'],
+html.light [class*='text-blue-300'],
+html.light [class*='text-sky-100'],
+html.light [class*='text-sky-200'],
+html.light [class*='text-sky-300'] {
+  color: #1d4ed8 !important;
+}
+
+html.light [class*='text-violet-100'],
+html.light [class*='text-violet-200'],
+html.light [class*='text-violet-300'],
+html.light [class*='text-purple-100'],
+html.light [class*='text-purple-200'],
+html.light [class*='text-purple-300'],
+html.light [class*='text-indigo-100'],
+html.light [class*='text-indigo-200'],
+html.light [class*='text-indigo-300'] {
+  color: #6d28d9 !important;
+}
+
+html.light [class*='text-emerald-100'],
+html.light [class*='text-emerald-200'],
+html.light [class*='text-emerald-300'],
+html.light [class*='text-teal-100'],
+html.light [class*='text-teal-200'],
+html.light [class*='text-teal-300'] {
+  color: #047857 !important;
+}
+
+html.light [class*='text-amber-100'],
+html.light [class*='text-amber-200'],
+html.light [class*='text-amber-300'] {
+  color: #92400e !important;
+}
+
+html.light [class*='text-rose-100'],
+html.light [class*='text-rose-200'],
+html.light [class*='text-rose-300'],
+html.light [class*='text-fuchsia-100'],
+html.light [class*='text-fuchsia-200'],
+html.light [class*='text-fuchsia-300'] {
+  color: #9f1239 !important;
+}
+
+/* Accent chips and tags in light mode */
+html.light [class*='bg-cyan-400/10'],
+html.light [class*='bg-cyan-500/10'] {
+  background-color: rgba(14, 116, 144, 0.12) !important;
+}
+
+html.light [class*='bg-emerald-400/10'],
+html.light [class*='bg-emerald-500/10'] {
+  background-color: rgba(5, 150, 105, 0.12) !important;
+}
+
+html.light [class*='bg-amber-400/10'],
+html.light [class*='bg-amber-500/10'] {
+  background-color: rgba(217, 119, 6, 0.14) !important;
+}
+
+html.light [class*='bg-rose-400/10'],
+html.light [class*='bg-rose-500/10'] {
+  background-color: rgba(225, 29, 72, 0.12) !important;
+}
+
+html.light [class*='border-cyan-300/20'],
+html.light [class*='border-cyan-300/25'],
+html.light [class*='border-cyan-300/30'] {
+  border-color: rgba(14, 116, 144, 0.32) !important;
+}
+
+html.light [class*='border-emerald-300/20'],
+html.light [class*='border-emerald-300/25'],
+html.light [class*='border-emerald-300/30'] {
+  border-color: rgba(5, 150, 105, 0.3) !important;
+}
+
+html.light [class*='border-amber-300/20'],
+html.light [class*='border-amber-300/25'],
+html.light [class*='border-amber-300/30'] {
+  border-color: rgba(217, 119, 6, 0.35) !important;
+}
+
+html.light [class*='border-rose-300/20'],
+html.light [class*='border-rose-300/25'],
+html.light [class*='border-rose-300/30'] {
+  border-color: rgba(225, 29, 72, 0.32) !important;
+}
+
+html.light input[type='range'] {
+  background: linear-gradient(90deg, rgba(14, 165, 233, 0.72), rgba(99, 102, 241, 0.45));
 }
 
 .grid-fade {

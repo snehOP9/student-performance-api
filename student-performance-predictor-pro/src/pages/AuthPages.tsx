@@ -20,7 +20,7 @@ import {
   signup,
   verify2FA,
 } from '../lib/api'
-import { storeSessionTokens } from '../lib/session'
+import { clearSessionTokens, storeDemoSession, storeSessionTokens } from '../lib/session'
 import { useAppStore } from '../store/appStore'
 
 const loginSchema = z.object({
@@ -43,11 +43,13 @@ function AuthLayout({
   title,
   subtitle,
   spotlight,
+  actions,
   children,
 }: {
   title: string
   subtitle: string
   spotlight: string
+  actions?: ReactNode
   children: ReactNode
 }) {
   return (
@@ -84,10 +86,13 @@ function AuthLayout({
             className="w-full max-w-xl"
           >
             <Card className="overflow-hidden border-white/10 bg-[linear-gradient(180deg,rgba(8,15,34,0.92),rgba(8,15,34,0.72))] p-0">
-              <div className="border-b border-white/10 px-6 py-6">
-                <p className="text-[0.72rem] uppercase tracking-[0.34em] text-cyan-200/80">Authentication</p>
-                <h2 className="mt-3 text-3xl font-bold text-white">{title}</h2>
-                <p className="mt-2 text-sm text-slate-300">{subtitle}</p>
+              <div className="flex items-start justify-between gap-4 border-b border-white/10 px-6 py-6">
+                <div>
+                  <p className="text-[0.72rem] uppercase tracking-[0.34em] text-cyan-200/80">Authentication</p>
+                  <h2 className="mt-3 text-3xl font-bold text-white">{title}</h2>
+                  <p className="mt-2 text-sm text-slate-300">{subtitle}</p>
+                </div>
+                {actions && <div className="shrink-0">{actions}</div>}
               </div>
               <div className="px-6 py-6">{children}</div>
             </Card>
@@ -198,6 +203,25 @@ function LoginForm() {
   )
 }
 
+function DemoLoginButton() {
+  const navigate = useNavigate()
+  const { setAuthenticated } = useAppStore()
+
+  const handleDemoLogin = () => {
+    clearSessionTokens()
+    const demoUser = storeDemoSession('student')
+    setAuthenticated(demoUser)
+    toast.success('Demo session started')
+    navigate('/student')
+  }
+
+  return (
+    <Button type="button" variant="outline" size="sm" onClick={handleDemoLogin}>
+      Demo login
+    </Button>
+  )
+}
+
 
 function SignupForm() {
   const navigate = useNavigate()
@@ -220,7 +244,7 @@ function SignupForm() {
     <form className="space-y-4" onSubmit={onSubmit}>
       <label className="block space-y-2">
         <span className="text-xs uppercase tracking-[0.24em] text-slate-400">Full name</span>
-        <Input placeholder="Aarav Rao" {...form.register('full_name')} />
+        <Input placeholder="Sneh" {...form.register('full_name')} />
         {form.formState.errors.full_name && (
           <p className="text-xs text-rose-300">{form.formState.errors.full_name.message}</p>
         )}
@@ -264,6 +288,7 @@ export function LoginPage() {
       title="Welcome back"
       subtitle="Access your cinematic AI workspace."
       spotlight="Step into a premium product layer built for confidence-aware forecasting, intervention planning, and academic intelligence."
+      actions={<DemoLoginButton />}
     >
       <LoginForm />
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-400">
@@ -288,6 +313,7 @@ export function SignupPage() {
       title="Create your AI account"
       subtitle="Launch the academic performance cockpit in minutes."
       spotlight="Bring students and teachers into one immersive product with layered analytics, prediction workflows, and intervention intelligence."
+      actions={<DemoLoginButton />}
     >
       <SignupForm />
       <div className="mt-6 text-sm text-slate-400">

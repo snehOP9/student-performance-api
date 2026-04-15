@@ -49,6 +49,7 @@ COHORT_SOURCE_PATH = ROOT_DIR / 'student_performance_synth_400k.csv'
 RISK_LOW_THRESHOLD = 0.35
 RISK_HIGH_THRESHOLD = 0.65
 DEFAULT_FRONTEND_ORIGINS = [
+    'https://student-performance-predictor-pro-w.vercel.app',
     'http://localhost:3000',
     'http://127.0.0.1:3000',
     'http://localhost:3001',

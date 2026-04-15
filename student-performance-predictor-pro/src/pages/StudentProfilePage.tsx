@@ -28,10 +28,10 @@ export function StudentProfilePage() {
         <Card className="bg-[linear-gradient(135deg,rgba(8,15,34,0.94),rgba(8,15,34,0.76),rgba(34,211,238,0.08))]">
           <div className="flex items-center gap-4">
             <div className="grid size-20 place-items-center rounded-[1.8rem] border border-cyan-300/20 bg-cyan-400/10">
-              <span className="text-2xl font-bold text-cyan-100">MS</span>
+              <span className="text-2xl font-bold text-cyan-100">AI</span>
             </div>
             <div>
-              <h3 className="text-2xl font-semibold text-white">Maya Singh</h3>
+              <h3 className="text-2xl font-semibold text-white">Ishita</h3>
               <p className="mt-1 text-sm text-slate-400">Grade 11 • STEM track • Cohort A</p>
             </div>
           </div>

@@ -1,7 +1,5 @@
 ﻿node_modules/
-student-ui/node_modules/
 .next/
-student-ui/.next/
 .env
 .env.*
 !.env.example
@@ -20,3 +18,5 @@ build/
 *.zip
 Extensions/coursera-automation-extension-master/
 .vercel
+student-performance-predictor-pro/vite.dev.log
+student-performance-predictor-pro/vite.dev.err
