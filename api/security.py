@@ -15,11 +15,19 @@ PBKDF2_PREFIX = 'pbkdf2_sha256'
 
 def _load_secret_key() -> str:
     secret = os.getenv('JWT_SECRET_KEY', '').strip()
-    if not secret:
+    if secret:
+        if secret in {'change-me-in-env', 'change-this-to-a-long-random-secret'} or len(secret) < 32:
+            raise RuntimeError('JWT_SECRET_KEY must be set to a strong 32+ character value')
+        return secret
+
+    app_env = os.getenv('APP_ENV', '').strip().lower()
+    allow_ephemeral = os.getenv('ALLOW_EPHEMERAL_JWT_SECRET', '').strip().lower() in {'1', 'true', 'yes', 'on'}
+    if app_env in {'development', 'dev', 'test', 'testing'} or allow_ephemeral:
         return secrets.token_urlsafe(48)
-    if secret == 'change-me-in-env' or len(secret) < 32:
-        raise RuntimeError('JWT_SECRET_KEY must be set to a strong 32+ character value')
-    return secret
+
+    raise RuntimeError(
+        'JWT_SECRET_KEY is required in production and must be set to a strong 32+ character value'
+    )
 
 
 SECRET_KEY = _load_secret_key()
