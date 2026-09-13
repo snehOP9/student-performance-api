@@ -27,7 +27,7 @@ class PasswordVerificationTests(unittest.TestCase):
         self.assertFalse(verify_password('password', malformed))
 
     def test_invalid_base64_returns_false(self):
-        malformed = f'{PBKDF2_PREFIX}$600000$%%%$%%%'
+        malformed = f'{PBKDF2_PREFIX}$600000$a$a'
 
         self.assertFalse(verify_password('password', malformed))
 
