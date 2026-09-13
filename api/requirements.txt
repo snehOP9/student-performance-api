@@ -4,7 +4,7 @@ pydantic[email]==2.8.2
 numpy==2.0.1
 pandas==2.2.2
 joblib==1.4.2
-sqlalchemy==2.0.37
+sqlalchemy==2.0.52
 psycopg[binary]==3.2.3
 python-dotenv==1.0.1
 python-jose==3.3.0
