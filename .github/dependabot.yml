@@ -1,0 +1,41 @@
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly
+      day: tuesday
+      time: "06:00"
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: pip
+    directory: /api
+    schedule:
+      interval: weekly
+      day: tuesday
+      time: "06:10"
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: tuesday
+      time: "06:20"
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: npm
+    directory: /student-performance-predictor-pro
+    schedule:
+      interval: weekly
+      day: tuesday
+      time: "06:30"
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: tuesday
+      time: "06:45"
+    open-pull-requests-limit: 5
