@@ -8,12 +8,20 @@ updates:
       time: "06:00"
     open-pull-requests-limit: 5
 
+  - package-ecosystem: pip
+    directory: /api
+    schedule:
+      interval: weekly
+      day: tuesday
+      time: "06:10"
+    open-pull-requests-limit: 5
+
   - package-ecosystem: npm
     directory: /
     schedule:
       interval: weekly
       day: tuesday
-      time: "06:15"
+      time: "06:20"
     open-pull-requests-limit: 5
 
   - package-ecosystem: npm
