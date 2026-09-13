@@ -1,4 +1,5 @@
 import base64
+import binascii
 import hashlib
 import hmac
 import os
@@ -57,7 +58,7 @@ def _verify_pbkdf2(password: str, hashed_password: str) -> bool:
 
         salt = base64.urlsafe_b64decode(encoded_salt.encode('utf-8'))
         expected = base64.urlsafe_b64decode(encoded_hash.encode('utf-8'))
-    except (ValueError, TypeError, OverflowError):
+    except (ValueError, TypeError, OverflowError, binascii.Error):
         return False
 
     derived_key = hashlib.pbkdf2_hmac(
