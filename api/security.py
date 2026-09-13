@@ -12,6 +12,8 @@ from jose import JWTError, jwt
 PBKDF2_ALGORITHM = 'sha256'
 PBKDF2_ITERATIONS = 600_000
 PBKDF2_PREFIX = 'pbkdf2_sha256'
+MAX_PBKDF2_VERIFY_ITERATIONS = 2_000_000
+
 
 def _load_secret_key() -> str:
     secret = os.getenv('JWT_SECRET_KEY', '').strip()
@@ -45,16 +47,24 @@ def _pbkdf2_hash(password: str, salt: bytes | None = None) -> str:
 
 def _verify_pbkdf2(password: str, hashed_password: str) -> bool:
     try:
-        _, iterations, encoded_salt, encoded_hash = hashed_password.split('$', 3)
+        prefix, iterations_raw, encoded_salt, encoded_hash = hashed_password.split('$', 3)
+        if prefix != PBKDF2_PREFIX:
+            return False
+
+        iterations = int(iterations_raw)
+        if iterations <= 0 or iterations > MAX_PBKDF2_VERIFY_ITERATIONS:
+            return False
+
         salt = base64.urlsafe_b64decode(encoded_salt.encode('utf-8'))
         expected = base64.urlsafe_b64decode(encoded_hash.encode('utf-8'))
-    except (ValueError, TypeError):
+    except (ValueError, TypeError, OverflowError):
         return False
+
     derived_key = hashlib.pbkdf2_hmac(
         PBKDF2_ALGORITHM,
         password.encode('utf-8'),
         salt,
-        int(iterations),
+        iterations,
     )
     return hmac.compare_digest(derived_key, expected)
 
