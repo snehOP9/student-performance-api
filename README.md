@@ -56,10 +56,12 @@ npm run dev -- --port 3000
 ### Required backend env
 
 - `DATABASE_URL`
-- `JWT_SECRET_KEY`
+- `JWT_SECRET_KEY` (required in production; must be a strong 32+ character value)
 - `FRONTEND_ORIGINS`
 - `FRONTEND_BASE_URL`
 - optional email and OAuth variables from `.env.example`
+
+If you intentionally run without `JWT_SECRET_KEY` for local/dev testing, set `APP_ENV=development` (or `test`) or set `ALLOW_EPHEMERAL_JWT_SECRET=true`.
 
 ### Required frontend env
 
