@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "postinstall": "npm install --prefix .. --ignore-scripts --no-audit --no-fund",
     "build": "node build.mjs"
   }
 }
