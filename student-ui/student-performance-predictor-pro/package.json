@@ -1,0 +1,9 @@
+{
+  "name": "student-performance-legacy-vercel-shim",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "postinstall": "npm install --prefix .. --ignore-scripts --no-audit --no-fund",
+    "build": "node ../node_modules/next/dist/bin/next build"
+  }
+}
