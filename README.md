@@ -1,43 +1,99 @@
 # Student Performance Predictor Pro
 
-Unified repository for:
+An end-to-end student-risk prediction platform combining **FastAPI + machine learning + uncertainty reporting + recommendations + authentication + React**.
 
-- `api/` -> FastAPI backend for prediction, uncertainty, recommendations, and auth
-- `artifacts/` -> model artifacts loaded by the backend at runtime
-- `student-performance-predictor-pro/` -> Vite + React frontend used for local development and Vercel deployment
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Vercel-black)](https://student-performance-predictor-pro-w.vercel.app/)
+[![API](https://img.shields.io/badge/API-FastAPI-009688)](https://fastapi.tiangolo.com/)
+[![Language](https://img.shields.io/badge/Python-3.11-blue)](https://www.python.org/)
 
-## Repository
+> **Goal:** detect academic risk early and turn model output into an actionable intervention workflow.
 
-- GitHub: https://github.com/snehOP9/student-performance-api
+## ✨ Features
 
-## API Endpoints
+- 📊 Student performance risk prediction
+- 🔎 Prediction explanations
+- 📐 Confidence and uncertainty reporting
+- 💡 Intervention recommendations
+- 🔐 Student/teacher authentication
+- ⚡ Vite + React frontend
+- 🚀 FastAPI backend with separate deployment
+- 🧪 Dedicated test suite
+- 📚 Documented model-change workflow
 
-- `GET /` -> health check
-- `GET /healthz` -> readiness check
-- `POST /predict` -> returns risk probability and explanation
-- `POST /uncertainty` -> returns confidence and uncertainty
-- `POST /recommend` -> returns intervention recommendations
-- `POST /auth/signup` -> creates a student or teacher account
-- `POST /auth/login` -> returns access and refresh tokens
-- `GET /auth/me` -> returns the current authenticated user
+## 🧩 Architecture
 
-## Local Setup
+```text
+┌──────────────────────────┐
+│      React / Vite UI     │
+│     Student Dashboard    │
+└────────────┬─────────────┘
+             │ HTTP / JSON
+             ▼
+┌──────────────────────────┐
+│          FastAPI         │
+│ Prediction + Auth + API  │
+└──────┬─────────┬─────────┘
+       │         │
+       ▼         ▼
+   ML models   Database
+       │
+       ▼
+Recommendations + explanations
+```
+
+## 🔌 API
+
+| Method | Endpoint | Purpose |
+|---|---|---|
+| GET | `/` | Basic health response |
+| GET | `/healthz` | Readiness/health check |
+| POST | `/predict` | Predict academic risk and explanation |
+| POST | `/uncertainty` | Return confidence and uncertainty |
+| POST | `/recommend` | Generate intervention recommendations |
+| POST | `/auth/signup` | Create a student or teacher account |
+| POST | `/auth/login` | Authenticate and return tokens |
+| GET | `/auth/me` | Return the authenticated user |
+
+After starting the backend, open:
+
+`http://127.0.0.1:8000/docs`
+
+FastAPI's OpenAPI page is the source of truth for current request and response schemas.
+
+## 📁 Repository layout
+
+```text
+api/                                  FastAPI application
+artifacts/                            Runtime ML artifacts
+docs/                                 Engineering and model documentation
+student-performance-predictor-pro/    Vite + React frontend
+tests/                                Automated tests
+Dockerfile                            Container configuration
+render.yaml                           Render deployment configuration
+requirements.txt                      Python dependencies
+```
+
+## 🛠️ Local setup
 
 ### Backend
 
 ```bash
 python -m venv .venv
-# Windows PowerShell
-.venv\Scripts\Activate.ps1
-
 pip install -r requirements.txt
-copy .env.example .env
-uvicorn api.main:app --reload
 ```
 
-Backend docs:
+Windows PowerShell:
 
-- http://127.0.0.1:8000/docs
+```powershell
+.venv\\Scripts\\Activate.ps1
+copy .env.example .env
+```
+
+Start the API:
+
+```bash
+uvicorn api.main:app --reload
+```
 
 ### Frontend
 
@@ -48,25 +104,51 @@ npm install
 npm run dev -- --port 3000
 ```
 
-## Deployment Split
+Set `VITE_API_URL` to the backend URL.
 
-- Vercel serves the Vite frontend from `student-performance-predictor-pro/`
-- Render serves the FastAPI backend using `render.yaml`
+## 🚀 Deployment
 
-### Required backend env
+- **Frontend:** Vercel
+- **Backend:** Render
+
+The repository includes deployment configuration for both surfaces.
+
+Backend configuration uses variables such as:
 
 - `DATABASE_URL`
 - `JWT_SECRET_KEY`
 - `FRONTEND_ORIGINS`
 - `FRONTEND_BASE_URL`
-- optional email and OAuth variables from `.env.example`
 
-### Required frontend env
+Frontend configuration uses:
 
 - `VITE_API_URL`
 
-## Notes
+See `.env.example` for the complete backend configuration.
 
-- Local root `npm run dev` already starts the Vite frontend on `localhost:3000`
-- Password hashing now uses a stable PBKDF2 flow and still supports legacy bcrypt hashes for existing accounts
-- The repository is intentionally trimmed to the canonical Vercel frontend and backend paths only
+## 🔐 Security
+
+Never commit real secrets, production credentials, tokens, OAuth credentials, or real student records.
+
+See [SECURITY.md](SECURITY.md) for vulnerability reporting guidance.
+
+## 🤝 Contributing
+
+Contributions that improve correctness, usability, reliability, documentation, testing, or model transparency are welcome.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## 📖 Documentation
+
+- [API Guide](docs/API.md)
+- [Model Change Checklist](docs/MODEL-CHANGE-CHECKLIST.md)
+- [Contributing Guide](CONTRIBUTING.md)
+- [Security Policy](SECURITY.md)
+
+## 🌐 Links
+
+- **Live demo:** https://student-performance-predictor-pro-w.vercel.app/
+- **Portfolio:** https://snehraunak.in
+- **Repository:** https://github.com/snehOP9/student-performance-api
+
+If this project is useful to you, sharing it with someone working on ML, education technology, or FastAPI can help the project reach more developers.
