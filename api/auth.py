@@ -204,7 +204,7 @@ def request_password_reset(db: Session, email: str) -> None:
     try:
         send_password_reset_email(user.email, reset_link)
     except MailerError as exc:
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
+        raise HTTPException(status_code=500, detail='Unable to send password reset email') from exc
 
 
 def reset_password(db: Session, token: str, new_password: str) -> None:
