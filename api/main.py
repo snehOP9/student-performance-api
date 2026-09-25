@@ -223,10 +223,10 @@ def assert_model_ready() -> None:
 def assert_explainer_ready() -> None:
     assert_model_ready()
     if explainer is None:
-        detail = 'Feature explainability is temporarily unavailable'
-        if explainer_load_error:
-            detail = f'{detail}: {explainer_load_error}'
-        raise HTTPException(status_code=503, detail=detail)
+        raise HTTPException(
+            status_code=503,
+            detail='Feature explainability is temporarily unavailable',
+        )
 
 
 def clamp(value: float, lower: float, upper: float) -> float:
