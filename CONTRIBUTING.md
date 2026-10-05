@@ -32,6 +32,15 @@ Use `.env.local.example` as the starting point for local frontend configuration.
 
 ## Verification
 
+For a full local verification from the repository root, run:
+
+```bash
+python scripts/verify_contributor.py
+```
+
+The helper runs the backend test suite first and then the production frontend build. You can still run the individual checks below while iterating on one side of the application.
+
+
 Backend:
 
 ```bash
