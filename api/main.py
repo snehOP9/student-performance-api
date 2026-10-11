@@ -175,7 +175,6 @@ explainer_load_error: str | None = None
 model_backend = 'unloaded'
 
 
-@app.on_event('startup')
 def allow_generated_model_fallback() -> bool:
     return (
         os.getenv('ALLOW_GENERATED_MODEL_FALLBACK', '').strip().lower() in {'1', 'true', 'yes'}
@@ -183,6 +182,7 @@ def allow_generated_model_fallback() -> bool:
     )
 
 
+@app.on_event('startup')
 def load_artifacts() -> None:
     global artifact_load_error, explainer_load_error, model_backend, model, FEATURE_COLUMNS, qhat, explainer
     init_db()
