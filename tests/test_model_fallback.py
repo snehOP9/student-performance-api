@@ -44,6 +44,8 @@ class GeneratedModelFallbackTests(unittest.TestCase):
         with self.assertRaises(HTTPException) as raised:
             main.assert_model_ready()
         self.assertEqual(raised.exception.status_code, 503)
+        self.assertEqual(raised.exception.detail, 'Model artifacts are not loaded')
+        self.assertNotIn('private context', str(raised.exception.detail))
 
     def test_explicit_local_opt_in_uses_generated_model(self):
         with patch.dict(os.environ, {'ALLOW_GENERATED_MODEL_FALLBACK': 'true', 'APP_ENV': 'development'}):
