@@ -152,3 +152,18 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 - **Repository:** https://github.com/snehOP9/student-performance-api
 
 If this project is useful to you, sharing it with someone working on ML, education technology, or FastAPI can help the project reach more developers.
+
+## Model startup integrity
+
+The inference API loads the committed `artifacts/lgbm_model.joblib`, `feature_columns.joblib`, and `conformal_qhat.joblib` at startup. If the trained model cannot be loaded, the API now **fails closed**: `/healthz` and prediction routes return HTTP 503 rather than silently substituting a generated model.
+
+For an explicitly labeled **local development demo only**, set both:
+
+```dotenv
+APP_ENV=development
+ALLOW_GENERATED_MODEL_FALLBACK=true
+```
+
+The opt-in generated predictor is blocked when `APP_ENV=staging` or `APP_ENV=production`, even if the fallback flag is set. It does not provide SHAP explainability and must not be reported as trained-model output. Deployment operators should verify `/model-info` reports `model_backend=lightgbm` and that `/healthz` is healthy before directing traffic. Do not set the fallback flag in real analytical deployments.
+
+Run `python -m unittest tests.test_model_fallback -v` to check fail-closed behavior; review the full API test suite before release.
