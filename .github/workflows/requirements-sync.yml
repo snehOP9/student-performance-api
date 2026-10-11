@@ -1,0 +1,38 @@
+name: Requirements sync
+
+on:
+  pull_request:
+    paths:
+      - 'requirements.txt'
+      - 'api/requirements.txt'
+      - 'scripts/check_requirements_sync.py'
+      - '.github/workflows/requirements-sync.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'requirements.txt'
+      - 'api/requirements.txt'
+      - 'scripts/check_requirements_sync.py'
+      - '.github/workflows/requirements-sync.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  requirements-sync:
+    name: Keep Python dependency pins synchronized
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Check dependency manifests
+        run: python scripts/check_requirements_sync.py
