@@ -175,6 +175,13 @@ explainer_load_error: str | None = None
 model_backend = 'unloaded'
 
 
+def allow_generated_model_fallback() -> bool:
+    return (
+        os.getenv('ALLOW_GENERATED_MODEL_FALLBACK', '').strip().lower() in {'1', 'true', 'yes'}
+        and os.getenv('APP_ENV', 'development').strip().lower() not in {'production', 'staging'}
+    )
+
+
 @app.on_event('startup')
 def load_artifacts() -> None:
     global artifact_load_error, explainer_load_error, model_backend, model, FEATURE_COLUMNS, qhat, explainer
@@ -195,16 +202,22 @@ def load_artifacts() -> None:
             except Exception as exc:  # pragma: no cover - optional explainability dependency
                 explainer = None
                 explainer_load_error = str(exc)
-        except Exception as model_exc:  # pragma: no cover - managed deploy fallback
-            from .pure_model import GeneratedRiskModel
-
-            model = GeneratedRiskModel()
-            model_backend = 'generated'
+        except Exception as model_exc:
             explainer = None
-            explainer_load_error = (
-                'Using generated predictor without SHAP explainability: '
-                f'{model_exc}'
-            )
+            explainer_load_error = None
+            if allow_generated_model_fallback():
+                from .pure_model import GeneratedRiskModel
+
+                model = GeneratedRiskModel()
+                model_backend = 'generated'
+                explainer_load_error = (
+                    'An explicit development-only generated predictor is in use: '
+                    f'{type(model_exc).__name__}'
+                )
+            else:
+                model = None
+                model_backend = 'unloaded'
+                artifact_load_error = f'Unable to load primary ML model ({type(model_exc).__name__})'
     except Exception as exc:  # pragma: no cover - startup resilience for managed deploys
         model = None
         FEATURE_COLUMNS = []
