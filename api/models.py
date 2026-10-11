@@ -21,6 +21,8 @@ class User(Base):
     is_email_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     two_fa_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
     two_fa_secret: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    two_fa_failed_attempts: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    two_fa_locked_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
 
