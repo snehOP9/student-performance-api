@@ -92,5 +92,22 @@ class GeneratedModelFallbackTests(unittest.TestCase):
         self.assertNotIn('ImportError', str(raised.exception.detail))
 
 
+    def test_explainer_readiness_does_not_leak_model_or_shap_diagnostics(self):
+        main.model = None
+        main.FEATURE_COLUMNS = []
+        main.qhat = None
+        main.explainer = None
+        main.artifact_load_error = 'ValueError: /srv/private/model.joblib'
+        main.explainer_load_error = 'ImportError: /srv/private/shap.py'
+
+        with self.assertRaises(HTTPException) as raised:
+            main.assert_explainer_ready()
+
+        self.assertEqual(raised.exception.status_code, 503)
+        self.assertEqual(raised.exception.detail, 'Model artifacts are not loaded')
+        self.assertNotIn('/srv/private', str(raised.exception.detail))
+        self.assertNotIn('ImportError', str(raised.exception.detail))
+        self.assertNotIn('ValueError', str(raised.exception.detail))
+
 if __name__ == '__main__':
     unittest.main()
