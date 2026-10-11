@@ -25,6 +25,8 @@ from .security import (
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/auth/login')
 ALLOWED_ROLES = {'student', 'teacher', 'admin'}
 PUBLIC_SIGNUP_ROLES = {'student', 'teacher'}
+MAX_2FA_FAILURES = 5
+TWO_FA_LOCKOUT = timedelta(minutes=15)
 
 
 def _issue_tokens(db: Session, user: User) -> dict:
@@ -119,13 +121,48 @@ def verify_2fa_and_issue(db: Session, temp_token: str, code: str) -> dict:
     if payload.get('type') != '2fa-temp':
         raise HTTPException(status_code=401, detail='Invalid temporary token')
 
-    user = db.query(User).filter(User.id == payload.get('sub')).first()
+    user = db.query(User).filter(User.id == payload.get('sub')).with_for_update().first()
     if not user or not user.two_fa_enabled or not user.two_fa_secret:
         raise HTTPException(status_code=400, detail='2FA is not configured')
+    if not user.is_active:
+        raise HTTPException(status_code=403, detail='User is inactive')
+
+    now = datetime.now(timezone.utc)
+    locked_until = user.two_fa_locked_until
+    if locked_until is not None and locked_until.tzinfo is None:
+        locked_until = locked_until.replace(tzinfo=timezone.utc)
+
+    if locked_until is not None and locked_until > now:
+        remaining_seconds = max(1, int((locked_until - now).total_seconds()) + 1)
+        raise HTTPException(
+            status_code=429,
+            detail='Too many 2FA attempts. Try again later.',
+            headers={'Retry-After': str(remaining_seconds)},
+        )
+
+    if locked_until is not None:
+        user.two_fa_failed_attempts = 0
+        user.two_fa_locked_until = None
 
     if not verify_totp(user.two_fa_secret, code):
+        user.two_fa_failed_attempts = int(user.two_fa_failed_attempts or 0) + 1
+        if user.two_fa_failed_attempts >= MAX_2FA_FAILURES:
+            user.two_fa_locked_until = now + TWO_FA_LOCKOUT
+            db.add(user)
+            db.commit()
+            raise HTTPException(
+                status_code=429,
+                detail='Too many 2FA attempts. Try again later.',
+                headers={'Retry-After': str(int(TWO_FA_LOCKOUT.total_seconds()))},
+            )
+        db.add(user)
+        db.commit()
         raise HTTPException(status_code=401, detail='Invalid 2FA code')
 
+    user.two_fa_failed_attempts = 0
+    user.two_fa_locked_until = None
+    db.add(user)
+    db.commit()
     tokens = _issue_tokens(db, user)
     return {
         'requires_2fa': False,
