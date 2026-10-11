@@ -1,6 +1,6 @@
 import os
 import secrets
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 from fastapi import Depends, Header, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -145,7 +145,7 @@ def refresh_access_token(db: Session, refresh_token: str) -> dict:
     sub = payload.get('sub')
 
     token_row = db.query(RefreshToken).filter(RefreshToken.id == jti).first()
-    if not token_row or token_row.revoked or token_row.expires_at < datetime.utcnow():
+    if not token_row or token_row.revoked or token_row.expires_at < datetime.now(timezone.utc):
         raise HTTPException(status_code=401, detail='Refresh token expired or revoked')
 
     user = db.query(User).filter(User.id == sub).first()
@@ -187,7 +187,7 @@ def request_password_reset(db: Session, email: str) -> None:
 
     plain_token = secrets.token_urlsafe(48)
     token_hash = hash_reset_token(plain_token)
-    expiry = datetime.utcnow() + timedelta(minutes=30)
+    expiry = datetime.now(timezone.utc) + timedelta(minutes=30)
 
     reset_row = PasswordResetToken(
         id=str(uuid4()),
@@ -214,7 +214,7 @@ def reset_password(db: Session, token: str, new_password: str) -> None:
         .filter(PasswordResetToken.token_hash == token_hash, PasswordResetToken.used == False)
         .first()
     )
-    if not row or row.expires_at < datetime.utcnow():
+    if not row or row.expires_at < datetime.now(timezone.utc):
         raise HTTPException(status_code=400, detail='Invalid or expired reset token')
 
     user = db.query(User).filter(User.id == row.user_id).first()
