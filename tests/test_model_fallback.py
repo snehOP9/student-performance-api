@@ -74,6 +74,21 @@ class GeneratedModelFallbackTests(unittest.TestCase):
             }):
                 self.assertFalse(main.allow_generated_model_fallback())
 
+    def test_explainer_failure_returns_generic_503_without_internal_details(self):
+        main.model = object()
+        main.FEATURE_COLUMNS = ['study_hours_sum']
+        main.qhat = 0.5
+        main.explainer = None
+        main.explainer_load_error = 'ImportError: private path /srv/app/.venv/shap.py'
+
+        with self.assertRaises(HTTPException) as raised:
+            main.assert_explainer_ready()
+
+        self.assertEqual(raised.exception.status_code, 503)
+        self.assertEqual(raised.exception.detail, 'Feature explainability is temporarily unavailable')
+        self.assertNotIn('/srv/app', str(raised.exception.detail))
+        self.assertNotIn('ImportError', str(raised.exception.detail))
+
 
 if __name__ == '__main__':
     unittest.main()
