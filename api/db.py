@@ -40,3 +40,11 @@ def init_db() -> None:
                 conn.execute(
                     text('ALTER TABLE users ADD COLUMN session_version INTEGER NOT NULL DEFAULT 0')
                 )
+            if 'two_fa_failed_attempts' not in user_columns:
+                conn.execute(
+                    text('ALTER TABLE users ADD COLUMN two_fa_failed_attempts INTEGER NOT NULL DEFAULT 0')
+                )
+            if 'two_fa_locked_until' not in user_columns:
+                conn.execute(
+                    text('ALTER TABLE users ADD COLUMN two_fa_locked_until TIMESTAMP WITH TIME ZONE')
+                )
