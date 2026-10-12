@@ -44,6 +44,8 @@ class GeneratedModelFallbackTests(unittest.TestCase):
         with self.assertRaises(HTTPException) as raised:
             main.assert_model_ready()
         self.assertEqual(raised.exception.status_code, 503)
+        self.assertEqual(raised.exception.detail, 'Model artifacts are not loaded')
+        self.assertNotIn('private context', str(raised.exception.detail))
 
     def test_explicit_local_opt_in_uses_generated_model(self):
         with patch.dict(os.environ, {'ALLOW_GENERATED_MODEL_FALLBACK': 'true', 'APP_ENV': 'development'}):
@@ -74,6 +76,38 @@ class GeneratedModelFallbackTests(unittest.TestCase):
             }):
                 self.assertFalse(main.allow_generated_model_fallback())
 
+    def test_explainer_failure_returns_generic_503_without_internal_details(self):
+        main.model = object()
+        main.FEATURE_COLUMNS = ['study_hours_sum']
+        main.qhat = 0.5
+        main.explainer = None
+        main.explainer_load_error = 'ImportError: private path /srv/app/.venv/shap.py'
+
+        with self.assertRaises(HTTPException) as raised:
+            main.assert_explainer_ready()
+
+        self.assertEqual(raised.exception.status_code, 503)
+        self.assertEqual(raised.exception.detail, 'Feature explainability is temporarily unavailable')
+        self.assertNotIn('/srv/app', str(raised.exception.detail))
+        self.assertNotIn('ImportError', str(raised.exception.detail))
+
+
+    def test_explainer_readiness_does_not_leak_model_or_shap_diagnostics(self):
+        main.model = None
+        main.FEATURE_COLUMNS = []
+        main.qhat = None
+        main.explainer = None
+        main.artifact_load_error = 'ValueError: /srv/private/model.joblib'
+        main.explainer_load_error = 'ImportError: /srv/private/shap.py'
+
+        with self.assertRaises(HTTPException) as raised:
+            main.assert_explainer_ready()
+
+        self.assertEqual(raised.exception.status_code, 503)
+        self.assertEqual(raised.exception.detail, 'Model artifacts are not loaded')
+        self.assertNotIn('/srv/private', str(raised.exception.detail))
+        self.assertNotIn('ImportError', str(raised.exception.detail))
+        self.assertNotIn('ValueError', str(raised.exception.detail))
 
 if __name__ == '__main__':
     unittest.main()
