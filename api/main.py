@@ -15,6 +15,7 @@ from .auth import (
     disable_2fa,
     enable_2fa,
     get_current_user,
+    require_roles,
     login_user,
     refresh_access_token,
     request_password_reset,
@@ -778,20 +779,20 @@ def healthz():
 
 
 @app.post('/predict')
-def predict(student: StudentInput):
+def predict(student: StudentInput, current_user: User = Depends(get_current_user)):
     assert_model_ready()
     return build_prediction_payload(student)
 
 
 @app.post('/uncertainty')
-def uncertainty(student: StudentInput):
+def uncertainty(student: StudentInput, current_user: User = Depends(get_current_user)):
     assert_model_ready()
     probability = predict_probability_from_df(to_model_df(student))
     return build_uncertainty_payload(probability)
 
 
 @app.post('/recommend')
-def recommend(student: StudentInput):
+def recommend(student: StudentInput, current_user: User = Depends(get_current_user)):
     assert_model_ready()
     baseline, recommendations = build_recommendations(student)
     return {
@@ -802,7 +803,7 @@ def recommend(student: StudentInput):
 
 
 @app.post('/explain')
-def explain(student: StudentInput):
+def explain(student: StudentInput, current_user: User = Depends(get_current_user)):
     assert_model_ready()
     prediction = build_prediction_payload(student)
     return {
@@ -816,7 +817,7 @@ def explain(student: StudentInput):
 
 
 @app.post('/interactions')
-def interactions(student: StudentInput):
+def interactions(student: StudentInput, staff_user: User = Depends(require_roles('teacher', 'admin'))):
     assert_explainer_ready()
     X = to_model_df(student)
     interaction_values = get_interaction_values(X)[0]
@@ -838,7 +839,7 @@ def interactions(student: StudentInput):
 
 
 @app.post('/simulate')
-def simulate(request: SimulationRequest):
+def simulate(request: SimulationRequest, current_user: User = Depends(get_current_user)):
     assert_model_ready()
     require_feature(request.feature)
 
@@ -862,7 +863,7 @@ def simulate(request: SimulationRequest):
 
 
 @app.post('/simulate-2d')
-def simulate_2d(request: Simulation2DRequest):
+def simulate_2d(request: Simulation2DRequest, staff_user: User = Depends(require_roles('teacher', 'admin'))):
     assert_model_ready()
     require_feature(request.feature_x)
     require_feature(request.feature_y)
@@ -896,7 +897,7 @@ def simulate_2d(request: Simulation2DRequest):
 
 
 @app.post('/predict/batch')
-def predict_batch(request: BatchPredictRequest):
+def predict_batch(request: BatchPredictRequest, staff_user: User = Depends(require_roles('teacher', 'admin'))):
     assert_model_ready()
     predictions: list[dict[str, object]] = []
     low_risk_count = 0
@@ -938,7 +939,7 @@ def predict_batch(request: BatchPredictRequest):
 
 
 @app.post('/compare')
-def compare(request: CompareRequest):
+def compare(request: CompareRequest, staff_user: User = Depends(require_roles('teacher', 'admin'))):
     assert_explainer_ready()
     X_a = to_model_df(request.student_a)
     X_b = to_model_df(request.student_b)
@@ -962,7 +963,7 @@ def compare(request: CompareRequest):
 
 
 @app.post('/cohort-stats')
-def cohort_stats(student: StudentInput):
+def cohort_stats(student: StudentInput, staff_user: User = Depends(require_roles('teacher', 'admin'))):
     assert_model_ready()
     reference = load_cohort_reference()
     population_risks = np.asarray(reference['risks'], dtype=float)
@@ -984,7 +985,7 @@ def cohort_stats(student: StudentInput):
 
 
 @app.get('/feature-importance')
-def feature_importance():
+def feature_importance(staff_user: User = Depends(require_roles('teacher', 'admin'))):
     assert_model_ready()
     importance = getattr(model, 'feature_importances_', None)
     if importance is None:
@@ -999,7 +1000,7 @@ def feature_importance():
 
 
 @app.get('/model-info')
-def model_info():
+def model_info(staff_user: User = Depends(require_roles('teacher', 'admin'))):
     assert_model_ready()
     estimator_count = int(getattr(model, 'n_estimators_', getattr(model, 'n_estimators', 0)))
     feature_count = int(getattr(model, 'n_features_in_', len(FEATURE_COLUMNS)))
@@ -1015,7 +1016,7 @@ def model_info():
 
 
 @app.post('/optimize')
-def optimize(request: OptimizeRequest):
+def optimize(request: OptimizeRequest, current_user: User = Depends(get_current_user)):
     assert_model_ready()
     current = to_model_df(request.student)
     baseline = predict_probability_from_df(current)
@@ -1050,7 +1051,7 @@ def optimize(request: OptimizeRequest):
 
 
 @app.post('/stress-test')
-def stress_test(request: StressTestRequest):
+def stress_test(request: StressTestRequest, staff_user: User = Depends(require_roles('teacher', 'admin'))):
     assert_model_ready()
     rng = np.random.default_rng(42)
     base_payload = normalize_student_payload(request.student)
