@@ -16,12 +16,33 @@ PBKDF2_PREFIX = 'pbkdf2_sha256'
 MAX_PBKDF2_VERIFY_ITERATIONS = 2_000_000
 
 
+def _is_production_environment() -> bool:
+    app_env = os.getenv('APP_ENV', '').strip().lower()
+    node_env = os.getenv('NODE_ENV', '').strip().lower()
+    render_env = os.getenv('RENDER', '').strip().lower()
+    vercel_env = os.getenv('VERCEL', '').strip().lower()
+    return (
+        app_env in {'production', 'staging'}
+        or node_env == 'production'
+        or render_env == 'true'
+        or vercel_env == '1'
+    )
+
+
 def _load_secret_key() -> str:
     secret = os.getenv('JWT_SECRET_KEY', '').strip()
     if not secret:
+        if _is_production_environment():
+            raise RuntimeError('JWT_SECRET_KEY must be configured in production/staging')
         return secrets.token_urlsafe(48)
-    if secret == 'change-me-in-env' or len(secret) < 32:
-        raise RuntimeError('JWT_SECRET_KEY must be set to a strong 32+ character value')
+
+    lowered = secret.lower()
+    if (
+        len(secret) < 32
+        or lowered in {'change-me-in-env', 'changeme'}
+        or lowered.startswith(('change-this-', 'replace-with-', 'your-'))
+    ):
+        raise RuntimeError('JWT_SECRET_KEY must be a real random value of at least 32 characters')
     return secret
 
 
