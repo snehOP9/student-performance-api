@@ -80,6 +80,7 @@ requirements.txt                      Python dependencies
 ```bash
 python -m venv .venv
 pip install -r requirements.txt
+```
 
 Generate a real JWT secret before starting the API:
 
@@ -88,7 +89,6 @@ python -c "import secrets; print(secrets.token_urlsafe(48))"
 ```
 
 Set the generated value as `JWT_SECRET_KEY`. The example placeholder is intentionally rejected. Set `APP_ENV=production` in production; startup fails if the JWT secret is missing or weak.
-```
 
 Windows PowerShell:
 
